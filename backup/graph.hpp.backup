@@ -1,0 +1,277 @@
+#include "dbg.h"
+#include "util.hpp"
+#include <algorithm>
+#include <bits/ranges_algo.h>
+#include <concepts>
+#include <ctime>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+#include <ranges>
+#include <set>
+#include <span>
+#include <type_traits>
+#include <variant>
+#include <vector>
+//* vector query is faster than that in set when the container size is less than 8.
+
+namespace graph {
+
+template <std::unsigned_integral T>
+class adjacency_list {
+public:
+  using vert_t = T;
+  using edge_t = std::pair<T, T>;
+
+private:
+  struct history_deactivate_vert {};
+  struct history_deactivate_edge {
+    vert_t v;
+  };
+  using history_op = std::variant<history_deactivate_vert, history_deactivate_edge>;
+
+public:
+  adjacency_list(std::filesystem::path);
+  adjacency_list(std::vector<std::vector<vert_t>> &&);
+
+  [[nodiscard]] constexpr size_t size() const noexcept { return m_data.size(); }
+  [[nodiscard]] constexpr size_t num_vert() const noexcept { return m_num_vert; }
+  [[nodiscard]] constexpr size_t num_edge() const noexcept { return m_num_edge; }
+  [[nodiscard]] constexpr size_t degree(const vert_t u) const noexcept { return m_degree[u]; }
+  [[nodiscard]] constexpr std::span<const vert_t> vertex() const noexcept { return {m_vertex.cbegin(), m_num_vert}; }
+  [[nodiscard]] constexpr std::span<const vert_t> neighbor(vert_t u) const noexcept { return {m_data[u].cbegin(), degree(u)}; }
+  [[nodiscard]] constexpr std::span<const vert_t> neighbor2(vert_t u) const;
+
+  void deactivate(const edge_t);
+  void deactivate(const vert_t);
+  void undo();
+  void display() const;
+
+  [[nodiscard]] adjacency_list<vert_t> operator[](const std::set<vert_t> &) const;
+
+  [[nodiscard]] std::vector<vert_t> core_value() const;
+  [[nodiscard]] const bool is_plex(size_t k) const;
+  [[nodiscard]] const bool is_core() const;
+  void list_plex(size_t k);
+  void list_plex_bk(size_t k, std::set<vert_t>&, std::set<vert_t>&, std::set<vert_t> &);
+
+private:
+  void _deactivate_directed_edge(const vert_t u, const vert_t v);
+  void _undo(const history_op &);
+  void _undo(const history_deactivate_vert);
+  void _undo(const history_deactivate_edge);
+
+  std::vector<std::vector<vert_t>> m_data;
+  std::vector<vert_t> m_vertex;
+  std::vector<size_t> m_degree;
+  size_t m_num_vert = 0;
+  size_t m_num_edge = 0;
+  std::stack<history_op> m_history_op;
+};
+
+template <std::unsigned_integral T>
+adjacency_list<T>::adjacency_list(std::filesystem::path path) {
+  auto ifs = std::ifstream{path};
+  ifs >> m_num_vert >> m_num_edge;
+  m_vertex.resize(m_num_vert);
+  m_data.resize(m_num_vert);
+  m_degree.resize(m_num_vert);
+  for (size_t i = 0; i < m_num_edge; i++) {
+    vert_t u, v;
+    ifs >> u >> v;
+    m_data[u].push_back(v);
+    m_data[v].push_back(u);
+  }
+  for (size_t i = 0; i < m_num_vert; i++)
+    m_vertex[i] = i;
+  for (size_t i = 0; i < m_num_vert; i++)
+    m_degree[i] = m_data[i].size();
+}
+
+template <std::unsigned_integral T>
+adjacency_list<T>::adjacency_list(std::vector<std::vector<vert_t>> &&adj) : m_data(std::move(adj)) {
+  m_num_vert = m_data.size();
+  m_vertex.resize(m_num_vert);
+  m_degree.resize(m_num_vert);
+  for (size_t i = 0; i < m_num_vert; i++)
+    m_vertex[i] = i;
+  for (size_t i = 0; i < m_num_vert; i++)
+    m_degree[i] = m_data[i].size();
+  for (size_t i = 0; i < m_num_vert; i++)
+    m_num_edge += m_degree[i];
+  m_num_edge /= 2;
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::deactivate(const edge_t e) {
+  auto [u, v] = e;
+  m_num_edge--;
+  _deactivate_directed_edge(u, v);
+  _deactivate_directed_edge(v, u);
+  m_history_op.push(history_deactivate_edge{u});
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::deactivate(const vert_t v) {
+  m_num_vert--;
+  std::swap(*std::ranges::find(std::span{m_vertex.begin(), m_num_vert}, v), m_vertex[m_num_vert]);
+  for (auto u : neighbor(v)) {
+    _deactivate_directed_edge(u, v);
+  }
+  m_history_op.push(history_deactivate_vert{});
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::undo() {
+  _undo(m_history_op.top());
+  m_history_op.pop();
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::_undo(const history_op &op) {
+  if (const auto *ptr = std::get_if<history_deactivate_vert>(&op))
+    _undo(*ptr);
+  else if (const auto *ptr = std::get_if<history_deactivate_edge>(&op))
+    _undo(*ptr);
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::_undo(const history_deactivate_vert op) {
+  auto v = m_vertex[m_num_vert];
+  m_num_vert++;
+  for (auto u : neighbor(v))
+    m_degree[u]++;
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::_undo(const history_deactivate_edge op) {
+  auto v = op.v;
+  auto u = m_data[v][degree(v)];
+  m_degree[v]++;
+  m_degree[u]++;
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::_deactivate_directed_edge(const vert_t u, const vert_t v) {
+  m_degree[u]--;
+  std::swap(*std::ranges::find(std::span{m_data[u].begin(), m_degree[u]}, v), m_data[u][m_degree[u]]);
+}
+
+template <std::unsigned_integral T>
+auto adjacency_list<T>::core_value() const -> std::vector<vert_t> {
+  auto cur_deg = std::vector<size_t>(num_vert());
+  for (size_t i = 0; i < num_vert(); i++)
+    cur_deg[i] = degree(vertex()[i]);
+  size_t max_deg = std::ranges::max(cur_deg);
+  auto bin = std::vector<size_t>(max_deg + 1);
+  auto pos = std::vector<size_t>(num_vert());
+  auto vert = std::vector<size_t>(num_vert());
+  auto bucket = std::vector<std::vector<vert_t>>(max_deg + 1);
+  for (size_t i = 0; i < num_vert(); i++)
+    bucket[cur_deg[i]].push_back(i);
+  std::ranges::copy(bucket | std::views::join, vert.begin());
+  for (size_t i = 0; i < max_deg + 1; i++)
+    bin[i] = bucket[i].size();
+  std::partial_sum(bin.begin(), bin.end(), bin.begin());
+  for (size_t i = 0; i < num_vert(); i++)
+    pos[vert[i]] = i;
+  for (size_t i = 0; i < max_deg; i++)
+    bin[max_deg - i] = bin[max_deg - i - 1];
+  bin[0] = 0;
+  auto result = std::vector<size_t>(num_vert());
+  auto vert_to_index = std::vector<size_t>(size());
+  for (size_t i = 0; i < num_vert(); i++)
+    vert_to_index[vertex()[i]] = i;
+  dbg(bin, pos, vert, cur_deg);
+  for (size_t i = 0; i < num_vert(); i++) {
+    vert_t v = vert[i];
+    result[v] = cur_deg[v];
+    for (auto u : neighbor(vertex()[v])) {
+      u = vert_to_index[u];
+      if (cur_deg[u] != cur_deg[v]) {
+        vert_t w = vert[bin[cur_deg[u]]];
+        std::swap(vert[pos[u]], vert[pos[w]]);
+        std::swap(pos[u], pos[w]);
+        cur_deg[u]--;
+      }
+    }
+  }
+  return result;
+}
+
+template <std::unsigned_integral T>
+const bool adjacency_list<T>::is_core() const {
+  return is_plex(1);
+}
+
+template <std::unsigned_integral T>
+const bool adjacency_list<T>::is_plex(size_t k) const {
+  return std::none_of(vertex().begin(), vertex().end(), [&](vert_t v) { return num_vert() - degree(v) < k; });
+}
+
+template <std::unsigned_integral T>
+adjacency_list<T> adjacency_list<T>::operator[](const std::set<vert_t> &verts) const {
+  std::vector<std::vector<vert_t>> adj(verts.size());
+  std::vector<size_t> vert_to_index(size());
+  std::vector<vert_t> index_to_vert(verts.size());
+  std::ranges::copy(verts, index_to_vert.begin());
+  for (size_t i = 0; i < index_to_vert.size(); i++)
+    vert_to_index[index_to_vert[i]] = i;
+  for (size_t i = 0; i < verts.size(); i++) {
+    vert_t v = index_to_vert[i];
+    for (auto u : neighbor(v)) {
+      if (verts.contains(u)) {
+        adj[i].push_back(vert_to_index[u]);
+      }
+    }
+  }
+  dbg(adj);
+  return adj;
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::display() const {
+  std::cout << "-------------------------------------------------- graph display" << std::endl;
+  std::cout << "num_vert: " << num_vert() << "\n";
+  std::cout << "num_edge: " << num_edge() << "\n";
+  dbg(vertex());
+  for (vert_t u : vertex()) {
+    dbg(std::pair(u, neighbor(u)));
+  }
+}
+
+template <std::unsigned_integral T>
+void adjacency_list<T>::list_plex(size_t k) {
+  // sort by degeneracy ordering
+  for (vert_t v : vertex()) {
+    std::set<vert_t> hop1{neighbor(v)};
+    std::set<vert_t> hop2;
+    for(vert_t u: hop1)
+      if(!hop1.contains(u)&&u!=v)
+        hop2.insert(u);
+    std::set<vert_t> seed;
+    seed.insert(v);
+    seed.insert(hop1);
+    seed.insert(hop2);
+    std::vector<vert_t> index_to_vert(seed.size());
+    std::ranges::copy(seed,index_to_vert.begin());
+    auto seed_graph = *this[seed];
+    std::set<vert_t> C{std::move(hop1)};
+    std::vector<vert_t> non_neighbors{std::move(hop2)};
+    for (size_t i = 1 ; i < k && i <= non_neighbors.size(); i++)
+    {
+      for (auto &&non_neighbor_combination: combination(non_neighbors.size(),i))
+      {
+        std::set<vert_t> P{v};
+        for (size_t index: non_neighbor_combination)         
+          P.insert(non_neighbors[index]);
+        std::set<vert_t> X;
+        std::ranges::set_difference(non_neighbors,P,std::inserter(X));
+        seed_graph.list_plex_bk(P,C,X);
+      }
+    }
+  }
+}
+} // namespace graph

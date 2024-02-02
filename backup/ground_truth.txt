@@ -1,0 +1,286 @@
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {2, 0, 4, 3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {0, 4, 3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {4, 3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {3, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 4, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 3, 4, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {} (std::unordered_set<long unsigned int>)
+
+plex found
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 4, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 4, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 3} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 3, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 4} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 4} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {5, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {} (std::unordered_set<long unsigned int>)
+
+plex found
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {5, 3, 4} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 4} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 5, 3, 4} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {4, 3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {3, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 4, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 3, 4, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 4, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 4, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 3, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 3, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 4, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 4, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {5, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {5, 3, 4, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 4, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {2} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 5, 3, 4, 0} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {0, 4, 3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {4, 3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {3, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 4, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 3, 4, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 4, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 4, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 3, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 3, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 4, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 4, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {5, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {5, 3, 4, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 4, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {0} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 5, 3, 4, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {4, 3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {3, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 4} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 3, 4} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3, 4} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 4} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {4} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 3, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {3, 5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1, 3} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {4, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {3} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 4, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {5, 1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 4, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {5} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {5, 3, 4, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {1} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {3, 4, 0, 2} (std::unordered_set<long unsigned int>)
+
+[../lne/space/graph.cpp:101 (actual_bk)] P = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] C = {} (std::unordered_set<long unsigned int>)
+[../lne/space/graph.cpp:101 (actual_bk)] X = {1, 5, 3, 4, 0, 2} (std::unordered_set<long unsigned int>)

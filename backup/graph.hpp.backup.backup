@@ -1,0 +1,95 @@
+#pragma once
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <ranges>
+#include <span>
+#include <iostream>
+
+template <typename T>
+class list {
+
+  std::unique_ptr<T[]> m_ptr;
+  size_t m_size = 0;
+  size_t m_max_size = 0;
+
+public:
+  list() = delete;
+  list(list<T> &&) = default;
+  list(size_t n) : m_ptr(std::make_unique<T[]>(n)), m_max_size(n), m_size(0) {}
+  list(std::span<T> values) : m_ptr(std::make_unique<T[]>(values)), m_max_size(values.size()), m_size(0) {}
+
+  [[nodiscard]] constexpr size_t max_size() const noexcept { return m_max_size; }
+  [[nodiscard]] constexpr size_t size() const noexcept { return m_size; }
+  [[nodiscard]] constexpr std::span<const T> active_elements() const noexcept { return {m_ptr.get(), m_ptr.get() + m_size}; }
+  [[nodiscard]] constexpr std::span<const T> inactive_elements() const noexcept { return {m_ptr.get() + m_size, m_ptr.get() + m_max_size}; }
+  [[nodiscard]] constexpr std::span<const T> elements() const noexcept { return {m_ptr.get(), m_ptr.get() + m_max_size}; }
+
+  const T &operator[](const size_t index) const { return m_ptr[index]; }
+  T &operator[](const size_t index) { return m_ptr[index]; }
+
+  void activate(const T val) {
+    std::swap(*std::find(m_ptr.get() + m_size, m_ptr.get() + m_max_size, val), m_ptr[m_size]);
+    m_size++;
+  }
+  void remove(const T val) {
+    m_max_size--;
+    std::swap(*std::find(m_ptr.get() + m_size, m_ptr.get() + m_max_size, val), m_ptr[m_max_size]);
+  }
+  void undo_activate() { m_size--; }
+  void undo_remove() { m_max_size++; }
+};
+
+using vert_t = size_t;
+using edge_t = std::pair<vert_t, vert_t>;
+
+class adjacent_array {
+
+  list<vert_t> m_verts;
+  std::vector<list<vert_t>> m_adj;
+
+  adjacent_array(const std::vector<std::vector<vert_t>> &adj);
+
+  [[nodiscard]] constexpr std::span<const vert_t> active_verts() const noexcept { return m_verts.active_elements();}
+  [[nodiscard]] constexpr std::span<const vert_t> inactive_verts() const noexcept { return m_verts.inactive_elements();}
+  [[nodiscard]] constexpr std::span<const vert_t> verts() const noexcept { return m_verts.elements();}
+  [[nodiscard]] constexpr std::span<const vert_t> active_neighbors(const vert_t v) const noexcept{ return m_adj[v].active_elements();}
+  [[nodiscard]] constexpr std::span<const vert_t> inactive_neighbors(const vert_t v) const noexcept{ return m_adj[v].inactive_elements();}
+  [[nodiscard]] constexpr std::span<const vert_t> neighbors (const vert_t v) const noexcept{ return m_adj[v].elements();}
+  [[nodiscard]] constexpr bool is_plex(const size_t k) const noexcept { return std::all_of(verts().begin(), verts().end(), [&](const vert_t v){return neighbors(v).size()+k>=verts().size();});}
+  [[nodiscard]] constexpr bool is_core() const noexcept {return is_plex(1);}
+  [[nodiscard]] constexpr bool is_active_plex(const size_t k) const noexcept { return std::all_of(active_verts().begin(), active_verts().end(), [&](const vert_t v){return active_neighbors(v).size()+k >= active_verts().size();});}
+  [[nodiscard]] constexpr bool is_active_core() const noexcept { return is_active_plex(1);}
+  [[nodiscard]] constexpr auto plex_expandable_inactive_verts(const size_t k) const noexcept { return inactive_verts()|std::views::filter([&](vert_t v){active_neighbors(v)+k>=active_verts().size()+1;});}
+
+  void activate_vert(const vert_t v){
+    m_verts.activate(v);
+    for (vert_t u:neighbors(v))
+      m_adj[u].activate(v);
+  }
+
+  void remove_vert(const vert_t v){
+    m_verts.remove(v);
+    for (vert_t u:inactive_neighbors(v))
+      m_adj[u].remove(v);
+  }
+
+  void undo_activate_vert(){
+    m_verts.undo_activate();
+    vert_t v = m_verts.inactive_elements().front();
+    for (vert_t u:neighbors(v))
+      m_adj[u].undo_activate();
+  }
+
+  void undo_remove_vert(){
+    m_verts.undo_remove();
+    vert_t v = m_verts.inactive_elements().back();
+    for (vert_t u:inactive_neighbors(v))
+      m_adj[u].undo_remove();
+  }
+
+  void display(){
+    std::cout<<"-------------------------------------------------- graph display"<<std::endl;
+  }
+};
+
