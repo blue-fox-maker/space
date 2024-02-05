@@ -17,19 +17,19 @@ df = pd.read_csv(args.dataset, sep=" ", names=["source","target","timestamp"],dt
 df.sort_values("timestamp")
 # df["timestamp"] = pd.to_datetime(df["timestamp"],unit="s").dt.date
 # df["timestamp"] = df.groupby("timestamp").ngroup()
+# df["timestamp"] = df["timestamp"].apply(lambda x: x//5)
 G = nx.from_pandas_edgelist(df,edge_attr=["timestamp"])
 G.graph["lifespan"] = len(df["timestamp"].unique())
 console.log(f"Load {G} in [0,{G.graph['lifespan']})")
 
 def core_decomposition(G,k):
     lifespan = G.graph["lifespan"]
-    k_core = np.ndarray((lifespan,lifespan),dtype=dict)
+    # k_core = np.ndarray((lifespan,lifespan),dtype=dict)
+    k_core = {}
     for ts,te in track(list(product(range(lifespan),range(lifespan)))):
         if ts<=te:
             projected_graph = nx.subgraph_view(G,filter_edge = lambda u,v: ts<=G[u][v]["timestamp"]<=te)
             k_core[ts,te] = set(nx.k_core(projected_graph,k).nodes)
-        # else:
-            # k_core[ts,te] = []
     return k_core
 
 def construct_phc(G,k_core):
@@ -52,11 +52,23 @@ def construct_phc(G,k_core):
 
 def phc_dump_to_file(path,G,phc):
     with open(path,"w") as file:
+        file.write(f"{len(G.nodes)}\n")
         for v in track(sorted(G.nodes)):
-            file.write(' '.join(map(str,[v]+phc[v]))+'\n')
+            file.write(f"{int(len(phc[v])/2)} "+' '.join(map(str,phc[v]))+'\n')
+
+def core_dump_to_file(path,k_core):
+    with open(path,"w") as file:
+        file.write(f"{len(k_core.keys())}\n")
+        for key, value in k_core.items():
+            ts,te = key
+            file.write(f"{ts} {te} {len(value)}")
+            for v in value:
+                file.write(f" {v}")
+            file.write("\n")
+        
         
 k_core = core_decomposition(G,3)
+core_dump_to_file("core.txt",k_core)
 phc_index = construct_phc(G,k_core)
-path = "phc.txt"
-phc_dump_to_file(path, G, phc_index)
-console.log(f"write phc index of size {sum(map(lambda v: len(phc_index[v]),G.nodes))/2} to {path}")
+phc_dump_to_file("phc.txt", G, phc_index)
+console.log(f"write phc index of size {sum(map(lambda v: len(phc_index[v]),G.nodes))//2}")
