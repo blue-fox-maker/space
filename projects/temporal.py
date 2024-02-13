@@ -14,10 +14,7 @@ args = parser.parse_args()
 console = Console()
 
 df = pd.read_csv(args.dataset, sep=" ", names=["source","target","timestamp"],dtype=int)
-df.sort_values("timestamp")
-# df["timestamp"] = pd.to_datetime(df["timestamp"],unit="s").dt.date
-# df["timestamp"] = df.groupby("timestamp").ngroup()
-# df["timestamp"] = df["timestamp"].apply(lambda x: x//5)
+df["timestamp"]//= 5
 G = nx.from_pandas_edgelist(df,edge_attr=["timestamp"])
 G.graph["lifespan"] = len(df["timestamp"].unique())
 console.log(f"Load {G} in [0,{G.graph['lifespan']})")

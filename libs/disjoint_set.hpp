@@ -1,6 +1,11 @@
+#include <algorithm>
 #include <concepts>
-#include <vector>
+#include <functional>
+#include <iostream>
 #include <numeric>
+#include <ostream>
+#include <ranges>
+#include <vector>
 
 template <std::unsigned_integral T>
 class disjoint_set {
@@ -29,4 +34,3 @@ public:
       rank[y]++;
   }
 };
-
