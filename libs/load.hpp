@@ -1,10 +1,16 @@
+#include <iterator>
+#include <source_location>
+#include <fstream>
 #include <algorithm>
 #include <concepts>
+#include <filesystem>
 #include <map>
 #include <ranges>
 #include <set>
 #include <tuple>
 #include <vector>
+#include <optional>
+#include "rich.hpp"
 
 template <typename TIter>
 class loader {
@@ -21,6 +27,11 @@ public:
   template <typename T1, typename T2>
   self_type &operator>>(std::pair<T1, T2> &data) {
     return *this >> data.first >> data.second;
+  }
+  template <typename... TArgs>
+  self_type &operator>>(std::tuple<TArgs...> &data) {
+    std::apply([&](auto &...args){(*this>>...>>args);},data);
+    return *this;
   }
   template <typename... TArgs>
   self_type &operator>>(std::vector<TArgs...> &data) {
@@ -55,43 +66,37 @@ public:
     }
     return *this;
   }
-};
-
-template <typename TIter>
-class dumper {
-  TIter iter;
-  using self_type = dumper<TIter>;
-
-public:
-  dumper(const TIter &iter) : iter(iter){};
   template <typename T>
-  self_type &operator<<(T &&data) {
-    *iter++ = std::forward(data);
-    return *this;
-  }
-  template <typename T1, typename T2>
-  self_type &operator<<(std::pair<T1, T2> &&data) {
-    return *this << std::forward(data.first) << std::forward(data.second);
-  }
-  template <typename... TArgs>
-  self_type &operator<<(std::tuple<TArgs...> &&data) {
-    std::apply([this](auto &&...args) { ((*this << args), ...); });
-    return *this;
-  }
-  template <std::ranges::sized_range R>
-  self_type &operator<<(R &&data) {
-    *this << data.size();
-    for (auto &&v : data)
-      *this << std::forward(v);
+  self_type &operator>>(std::optional<T> &data) {
+    return *this>>data.value();
   }
 };
 
-template <typename TIter>
-auto load(const TIter &iter) {
-  return loader<TIter>(iter);
+template <typename T>
+T load(const std::filesystem::path& path)
+{
+  auto ifs = std::ifstream{path};
+  T data;
+  loader(std::istream_iterator<size_t>{ifs})>>data;
+  return data;
 }
 
-template <typename TIter>
-auto dump(const TIter &iter) {
-  return dumper<TIter>(iter);
-}
+// class Workflow
+// {
+//   template <typename T>
+//   static std::vector<std::optional<T>> load_data(const std::filesystem::path &path, const std::source_location location = std::source_location::current())  
+//   {
+//     rich::console::rule(location.function_name());
+//     std::vector<std::optional<T>> result;
+//     std::optional<T> data;
+//     auto ifs = std::ifstream{path};
+//     auto ifs_iter = std::istream_iterator<size_t>{ifs};
+//     for(auto i: std::views::iota((size_t)0,*ifs_iter)|rich::views::track())
+//     {
+//       data = load<T>(ifs_iter);
+//       // co_return data;
+//       result.push_back(std::move(data));
+//     }
+//     return result;
+//   }
+// };

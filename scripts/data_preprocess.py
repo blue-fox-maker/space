@@ -35,7 +35,7 @@ print(f"Load {G} in [0, {lifespan})")
 
 df.to_csv(f"data.txt" ,sep=' ',index=False,header=False)
 
-operations = questionary.checkbox("What do you want?", choices=["temporal core"]).ask()
+operations = questionary.checkbox("What do you want?", choices=["temporal core", "connected components"]).ask()
 if "temporal core" in operations:
     k = int(questionary.text("input k", default="3", validate= lambda x: x.isdigit()).ask())
     with open(f"data_core.txt", "w") as file:
@@ -49,6 +49,21 @@ if "temporal core" in operations:
                 file.write(f"{ts} {te} {len(core)} ")
                 for v in core:
                     file.write(f"{v} ")
+                file.write('\n')
+if "connected components" in operations:
+    with open(f"data_cc.txt", "w") as file:
+        file.write(f"{len(G.nodes)} {len(G.edges)} {lifespan}\n")
+        file.write(f"{(lifespan+1)*lifespan//2}\n")
+        for ts in track(range(lifespan)):
+            projected_graph = nx.Graph()
+            for te in range(ts,lifespan):
+                projected_graph = nx.compose(projected_graph,snapshots[te])
+                ccs = list(nx.connected_components(projected_graph))
+                file.write(f"{ts} {te} {len(ccs)} ")
+                for cc in ccs:
+                    file.write(f"{len(cc)} ")
+                    for v in cc:
+                        file.write(f"{v} ")
                 file.write('\n')
 
 
