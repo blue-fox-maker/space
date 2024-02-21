@@ -33,18 +33,18 @@
  * 2. A Point class which captures the idea of a d-dimensional euclidean point.
  */
 
+#include <memory>
 #include <algorithm>
 #include <cmath>
 #include <deque>
 #include <iostream>
-#include <memory>
 #include <numeric>
 #include <sstream>
 #include <type_traits>
 #include <vector>
 
 namespace RangeTree {
-constexpr size_t Dimension = 3;
+
 /**
  * A point in euclidean space.
  *
@@ -59,19 +59,79 @@ class Point {
   static_assert(std::is_arithmetic<T>::value, "Type T must be numeric");
 
 private:
-  // std::vector<T> vec;
-  std::array<T, Dimension> vec;
+  std::vector<T> vec;
   S val;
+  int multiplicity;
 
 public:
-  auto friend operator<=>(const Point<T, S> &, const Point<T, S> &) = default;
-  std::array<T, Dimension> pos() { return vec; }
-  Point() = default;
-  Point(const std::array<T, Dimension> &vec, const S &val) : val(val), vec(vec) {}
 
-  constexpr size_t dim() const {
-    // return vec.size();
-    return Dimension;
+  /**
+   * Constructs an empty point.
+   *
+   * Creates a point in 0 dimensional euclidean space. This constructor
+   * is provided only to make certain edge cases easier to handle.
+   */
+  Point() : multiplicity(0) {}
+
+  /**
+   * Constructs a point.
+   *
+   * Creates a point with its position in euclidean space defined by vec,
+   * value defined by val, and a multiplicity/count of 1.
+   *
+   * @param vec the position in euclidean space.
+   * @param val the value associated with the point.
+   */
+  Point(const std::vector<T> &vec, const S &val) : val(val), vec(vec), multiplicity(1) {}
+
+  /**
+   * Constructs a point.
+   *
+   * Copies a point.
+   *
+   * @param vec the position in euclidean space.
+   * @param val the value associated with the point.
+   */
+  Point(const Point<T, S> &p) : val(p.val), vec(p.vec), multiplicity(p.count()) {}
+
+  /**
+   * Euclidean position of the point.
+   *
+   * @return the euclidean position of the point as a std::vector.
+   */
+  const std::vector<T> &asVector() const {
+    return vec;
+  }
+
+  /**
+   * The point's ambient dimension.
+   *
+   * @return the dimension of the space in which the point lives. I.e. a point of the
+   *         form (1,2,3) lives in dimension 3.
+   */
+  unsigned long dim() const {
+    return vec.size();
+  }
+
+  /**
+   * The point's count/multiplicity.
+   *
+   * @return returns the count/multiplicity.
+   */
+  int count() const {
+    return multiplicity;
+  }
+
+  /**
+   * Increase the point's count/multiplicity.
+   *
+   * @param n amount to increase by.
+   */
+  void increaseCountBy(int n) {
+    if (n < 0) {
+      throw std::logic_error("Can't increase by a negative amount");
+    }
+    multiplicity += n;
   }
 
   /**
@@ -93,11 +153,37 @@ public:
    * @return the coordinate value.
    */
   T operator[](int index) const {
-    if (index < 0 || index >= Dimension) {
+    if (index < 0 || index >= dim()) {
       throw std::out_of_range("[] access index for point is out of range.");
     }
     return vec[index];
   }
+
+  /**
+   * Check for equality.
+   *
+   * Two points are considered equal if they are in the same spot, have the same
+   * multiplicity/count, and store the same value.
+   *
+   * @param p some other point
+   * @return true if \p equals the current point, otherwise false.
+   */
+  // bool operator==(const Point<T, S> &p) const {
+  //   return vec == p.vec && multiplicity == p.multiplicity && val == p.val;
+  // }
+
+  /**
+   * Check for inequality.
+   *
+   * The opposite of ==.
+   *
+   * @param p some other point.
+   * @return false if \p equals the current point, otherwise true.
+   */
+  // bool operator!=(const Point<T, S> &p) const {
+  //   return !((*this) == p);
+  // }
+  friend auto operator <=>(const Point<T,S>&,const Point<T,S>&) = default;
 
   /**
    * Prints the point to standard out.
@@ -115,9 +201,9 @@ public:
       std::cout << (*this)[i] << ", ";
     }
     if (withCount) {
-      std::cout << (*this)[dim() - 1] << ")" << std::endl;
+      std::cout << (*this)[dim() - 1] << ") : " << count() << std::endl;
     } else {
-      std::cout << (*this)[dim() - 1] << ")" << std::endl;
+      std::cout << (*this)[dim() - 1] << ") : " << std::endl;
     }
   }
 };
@@ -154,8 +240,7 @@ public:
   }
 
   static bool equals(const Point<T, S> &p1, const Point<T, S> &p2) {
-    // return p1.asVector() == p2.asVector();
-    return p1 == p2;
+    return p1.asVector() == p2.asVector();
   }
 
   int getCompareStartIndex() const {
@@ -258,46 +343,45 @@ public:
   SortedPointMatrix(std::vector<Point<T, S> *> &points) : currentDim(0) {
     if (points.size() == 0) {
       throw std::range_error("Cannot construct a SortedPointMatrix with 0 points.");
-    }
-    // else {
-    // dim = points[0]->dim();
-    // for (int i = 1; i < points.size(); i++) {
-    //   if (points[i]->dim() != dim) {
-    //     throw std::logic_error("Input points to SortedPointMatrix must all"
-    //                            " have the same dimension.");
-    //   }
-    // }
-
-    int sortDimension = (points.size() > MAX_POINTS_BEFORE_SWITCH) ? dim - 1 : 0;
-    PointOrdering<T, S> pointOrdering(sortDimension);
-    std::sort(points.begin(), points.end(),
-              [pointOrdering](Point<T, S> *p1, Point<T, S> *p2) {
-                return pointOrdering.less(*p1, *p2);
-              });
-
-    pointsSortedByCurrentDim.push_back(points[0]);
-    int k = 0;
-    for (int i = 1; i < points.size(); i++) {
-      if (pointOrdering.equals(*(pointsSortedByCurrentDim[k]), *points[i])) {
-        if (pointsSortedByCurrentDim[k]->value() != points[i]->value()) {
-          throw std::logic_error("Input points have same position but different values");
+    } else {
+      dim = points[0]->dim();
+      for (int i = 1; i < points.size(); i++) {
+        if (points[i]->dim() != dim) {
+          throw std::logic_error("Input points to SortedPointMatrix must all"
+                                 " have the same dimension.");
         }
-        // pointsSortedByCurrentDim[k]->increaseCountBy(points[i]->count());
-      } else {
-        pointsSortedByCurrentDim.push_back(points[i]);
-        k++;
       }
-    }
 
-    if (pointsSortedByCurrentDim.size() > MAX_POINTS_BEFORE_SWITCH) {
-      for (int i = dim - 2; i >= currentDim; i--) {
-        std::vector<int> order = sortOrder(pointsSortedByCurrentDim, i);
-        redirectionTable.push_front(order);
-        rearrangeGivenOrder(pointsSortedByCurrentDim, order);
+      int sortDimension = (points.size() > MAX_POINTS_BEFORE_SWITCH) ? dim - 1 : 0;
+      PointOrdering<T, S> pointOrdering(sortDimension);
+      std::sort(points.begin(), points.end(),
+                [pointOrdering](Point<T, S> *p1, Point<T, S> *p2) {
+                  return pointOrdering.less(*p1, *p2);
+                });
+
+      pointsSortedByCurrentDim.push_back(points[0]);
+      int k = 0;
+      for (int i = 1; i < points.size(); i++) {
+        if (pointOrdering.equals(*(pointsSortedByCurrentDim[k]), *points[i])) {
+          if (pointsSortedByCurrentDim[k]->value() != points[i]->value()) {
+            throw std::logic_error("Input points have same position but different values");
+          }
+          pointsSortedByCurrentDim[k]->increaseCountBy(points[i]->count());
+        } else {
+          pointsSortedByCurrentDim.push_back(points[i]);
+          k++;
+        }
+      }
+
+      if (pointsSortedByCurrentDim.size() > MAX_POINTS_BEFORE_SWITCH) {
+        for (int i = dim - 2; i >= currentDim; i--) {
+          std::vector<int> order = sortOrder(pointsSortedByCurrentDim, i);
+          redirectionTable.push_front(order);
+          rearrangeGivenOrder(pointsSortedByCurrentDim, order);
+        }
       }
     }
   }
-  // };
 
   void moveToNextDimension() {
     if (currentDim == dim - 1) {
@@ -426,7 +510,7 @@ private:
   std::vector<int> pointerToLeqLeft;
   std::vector<int> pointerToGeqRight;
   std::vector<int> pointerToLeqRight;
-  // std::vector<int> cumuCountPoints;
+  std::vector<int> cumuCountPoints;
 
 public:
   /**
@@ -445,6 +529,7 @@ public:
 
     if (spm.numUniquePoints() == 1) {
       isLeaf = true;
+      pointCountSum = point->count();
       pointsLastDimSorted.push_back((*point)[point->dim() - 1]);
       if (spm.getCurrentDim() == point->dim() - 2) {
         spm.moveToNextDimension();
@@ -455,14 +540,17 @@ public:
           new RangeTreeNode<T, S>(spmPair.first, onLeftEdge, false));
       right = std::shared_ptr<RangeTreeNode<T, S>>(
           new RangeTreeNode<T, S>(spmPair.second, false, onRightEdge));
+      pointCountSum = left->totalPoints() + right->totalPoints();
 
       int dim = point->dim();
       if (spm.getCurrentDim() + 2 == dim) {
         spm.moveToNextDimension();
 
         allPointsSorted = spm.getSortedPointsAtCurrentDim();
+        cumuCountPoints.push_back(0);
         for (int i = 0; i < allPointsSorted.size(); i++) {
           pointsLastDimSorted.push_back((*allPointsSorted[i])[dim - 1]);
+          cumuCountPoints.push_back(cumuCountPoints.back() + allPointsSorted[i]->count());
         }
         const auto &leftSorted = left->pointsLastDimSorted;
         const auto &rightSorted = right->pointsLastDimSorted;
@@ -594,8 +682,8 @@ public:
    * @return true if the point is in the rectangle, false otherwise.
    */
   bool pointInRange(const Point<T, S> &point,
-                    const std::array<T,Dimension> &lower,
-                    const std::array<T,Dimension> &upper) const {
+                    const std::vector<T> &lower,
+                    const std::vector<T> &upper) const {
     for (int i = 0; i < point.dim(); i++) {
       if (point[i] < lower[i]) {
         return false;
@@ -702,8 +790,8 @@ public:
    * @param upper
    * @return a std::vector of the Points.
    */
-  // std::vector<Point<T, S>> pointsInRange(const std::vector<T> &lower, const std::vector<T> &upper) const {
-  std::vector<Point<T, S>> pointsInRange(const std::array<T,Dimension> &lower, const std::array<T,Dimension> &upper) const {
+  std::vector<Point<T, S>> pointsInRange(const std::vector<T> &lower,
+                                         const std::vector<T> &upper) const {
     std::vector<Point<T, S>> pointsToReturn = {};
     if (isLeaf) {
       if (pointInRange(*point, lower, upper)) {
@@ -784,7 +872,7 @@ public:
     }
   }
 
-  void leftFractionalCascade(const std::array<T,Dimension> &lower,
+  void leftFractionalCascade(const std::vector<T> &lower,
                              int geqInd,
                              int leqInd,
                              std::vector<RangeTreeNode<T, S> *> &nodes,
@@ -830,7 +918,7 @@ public:
     }
   }
 
-  void rightFractionalCascade(const std::array<T,Dimension> &upper,
+  void rightFractionalCascade(const std::vector<T> &upper,
                               int geqInd,
                               int leqInd,
                               std::vector<RangeTreeNode<T, S> *> &nodes,
@@ -881,7 +969,7 @@ public:
    * @param withLower
    * @param nodes
    */
-  void leftCanonicalNodes(const std::array<T,Dimension> &lower,
+  void leftCanonicalNodes(const std::vector<T> &lower,
                           std::vector<std::shared_ptr<RangeTreeNode<T, S>>> &nodes) {
     if (isLeaf) {
       throw std::logic_error("Should never have a leaf deciding if its canonical.");
@@ -909,7 +997,7 @@ public:
    * @param upper
    * @param nodes
    */
-  void rightCanonicalNodes(const std::array<T,Dimension> &upper,
+  void rightCanonicalNodes(const std::vector<T> &upper,
                            std::vector<std::shared_ptr<RangeTreeNode<T, S>>> &nodes) {
     if (isLeaf) {
       throw std::logic_error("Should never have a leaf deciding if its canonical.");
@@ -932,6 +1020,25 @@ public:
     }
   }
 
+  /**
+   * Print the structure of the tree rooted at the curret node.
+   *
+   * The printed structure does not reflect any subtrees for other coordinates.
+   *
+   * @param numIndents the number of indents to use before every line printed.
+   */
+  void print(int numIndents) {
+    for (int i = 0; i < numIndents; i++) {
+      std::cout << "\t";
+    }
+    if (isLeaf) {
+      point->print(true);
+    } else {
+      point->print(false);
+      left->print(numIndents + 1);
+      right->print(numIndents + 1);
+    }
+  }
 };
 
 /**
@@ -979,6 +1086,40 @@ private:
     return vecOfPointers;
   }
 
+  std::vector<T> getModifiedLower(const std::vector<T> &lower,
+                                  const std::vector<bool> &withLower) const {
+    std::vector<T> newLower = lower;
+    for (int i = 0; i < lower.size(); i++) {
+      if (std::is_integral<T>::value) {
+        if (!withLower[i]) {
+          newLower[i]++;
+        }
+      } else {
+        if (!withLower[i]) {
+          newLower[i] = std::nextafter(newLower[i], std::numeric_limits<T>::max());
+        }
+      }
+    }
+    return newLower;
+  }
+
+  std::vector<T> getModifiedUpper(const std::vector<T> &upper,
+                                  const std::vector<bool> &withUpper) const {
+    std::vector<T> newUpper = upper;
+    for (int i = 0; i < upper.size(); i++) {
+      if (std::is_integral<T>::value) {
+        if (!withUpper[i]) {
+          newUpper[i]--;
+        }
+      } else {
+        if (!withUpper[i]) {
+          newUpper[i] = std::nextafter(newUpper[i], std::numeric_limits<T>::lowest());
+        }
+      }
+    }
+    return newUpper;
+  }
+
 public:
   /**
    * Construct a new RangeTree from input points.
@@ -989,16 +1130,169 @@ public:
    *
    * @param points the points from which to create a RangeTree
    */
-  RangeTree() = default;
   RangeTree(const std::vector<Point<T, S>> &points) : savedPoints(copyPointsToHeap(points)),
                                                       savedPointsRaw(getRawPointers(savedPoints)) {
     SortedPointMatrix<T, S> spm(savedPointsRaw);
     root = std::shared_ptr<RangeTreeNode<T, S>>(new RangeTreeNode<T, S>(spm));
   }
+  RangeTree() = default;
 
-  std::vector<Point<T,S>> pointsInRange(const std::array<T,Dimension> &lower, const std::array<T,Dimension> &upper){
-    return root->pointsInRange(lower,upper);   
+  /**
+   * The number of points within a high dimensional rectangle.
+   *
+   * The rectangle is defined by the input parameters. In particular, an n-dimensional point
+   * p_1 = (p_{11},...,p_{1n}) is an is in the rectangle if, for all 1 <= i <= n, we have
+   *
+   * lower[i] <= p_{1i} <= upper[i] if withLower[i] == true and withUpper[i] == true, or
+   * lower[i] < p_{1i} <= upper[i] if withLower[i] == false and withUpper[i] == true, or
+   * lower[i] <= p_{1i} < upper[i] if withLower[i] == true and withUpper[i] == false, or
+   * lower[i] < p_{1i} < upper[i] if withLower[i] == false and withUpper[i] == false.
+   *
+   * @param lower the lower bounds of the rectangle.
+   * @param upper the upper bounds of the rectangle.
+   * @param withLower whether to use strict (<) or not strict (<=) inequalities at certain coordiantes of p_1
+   *                  for the lower bounds.
+   * @param withUpper as for \withLower but for the upper bounds.
+   * @return the number of points in the rectangle.
+   */
+  int countInRange(const std::vector<T> &lower,
+                   const std::vector<T> &upper,
+                   const std::vector<bool> &withLower,
+                   const std::vector<bool> &withUpper) const {
+    if (lower.size() != upper.size() || lower.size() != withLower.size() ||
+        lower.size() != withUpper.size()) {
+      throw std::logic_error("All vectors inputted to countInRange must have the same length.");
+    }
+    for (int i = 0; i < lower.size(); i++) {
+      if (((!withUpper[i] || !withLower[i]) && lower[i] >= upper[i]) ||
+          lower[i] > upper[i]) {
+        return 0;
+      }
+    }
+    return root->countInRange(getModifiedLower(lower, withLower),
+                              getModifiedUpper(upper, withUpper));
   }
 
+  /**
+  * The number of points within a high dimensional rectangle.
+  *
+  * The rectangle is defined by the input parameters. In particular, an n-dimensional point
+  * p_1 = (p_{11},...,p_{1n}) is an is in the rectangle if, for all 1 <= i <= n, we have
+  *
+  * lower[i] <= p_{1i} <= upper[i]
+  *
+  * @param lower the lower bounds of the rectangle.
+  * @param upper the upper bounds of the rectangle.
+
+  * @return the number of points in the rectangle.
+  */
+  int countInRange(const std::vector<T> &lower,
+                   const std::vector<T> &upper) const {
+    if (lower.size() != upper.size()) {
+      throw std::logic_error("upper and lower in countInRange must have the same length.");
+    }
+    return root->countInRange(lower, upper);
+  }
+
+  /**
+   * Return all points in range.
+   *
+   * Returns a std::vector of all points in the given rectangle. See \countInRange for how
+   * this rectangle is specified. NOTE: these points may not be identical to those points
+   * that were given as input to the RangeTree at construction time. This is because
+   * duplicate points are merged together with appropriate incrementing of their multiplicity.
+   * That is, two points at euclidean position (1,2,3) and multiplicities/counts of 2 and 3
+   * respectively will be merged into a single Point with position (1,2,3) and multiplicity 5
+   * (recall that all points with the same euclidean position are required to have the same
+   * associated value so it is ok to merge in this way).
+   *
+   * @param lower the lower bounds of the rectangle.
+   * @param upper the upper bounds of the rectangle.
+   * @param withLower whether to use strict (<) or not strict (<=) inequalities at certain coordiantes of p_1
+   *                  for the lower bounds.
+   * @param withUpper as for \withLower but for the upper bounds.
+   * @return the number of points in the rectangle.
+   */
+  std::vector<Point<T, S>> pointsInRange(const std::vector<T> &lower,
+                                         const std::vector<T> &upper,
+                                         const std::vector<bool> &withLower,
+                                         const std::vector<bool> &withUpper) const {
+    if (lower.size() != upper.size() || lower.size() != withLower.size() ||
+        lower.size() != withUpper.size()) {
+      throw std::logic_error("All vectors inputted to pointsInRange must have the same length.");
+    }
+    for (int i = 0; i < lower.size(); i++) {
+      if (((!withUpper[i] || !withLower[i]) && lower[i] >= upper[i]) ||
+          lower[i] > upper[i]) {
+        return std::vector<Point<T, S>>();
+      }
+    }
+    return root->pointsInRange(getModifiedLower(lower, withLower),
+                               getModifiedUpper(upper, withUpper));
+  }
+
+  void print() const {
+    root->print(0);
+  }
 };
+
+/**
+ * A class which is used to naively count the number of points in a given rectangle. This class is used
+ * for testing an benchmarking, it should not be used in practice.
+ */
+template <typename T, class S>
+class NaiveRangeCounter {
+  static_assert(std::is_arithmetic<T>::value, "Type T must be numeric");
+
+private:
+  std::vector<Point<T, S>> points;
+
+  static bool pointInRange(const Point<T, S> &point,
+                           const std::vector<T> &lower,
+                           const std::vector<T> &upper,
+                           const std::vector<bool> &withLower,
+                           const std::vector<bool> &withUpper) {
+    for (int i = 0; i < point.dim(); i++) {
+      if (point[i] < lower[i] ||
+          (point[i] == lower[i] && !withLower[i])) {
+        return false;
+      }
+      if (point[i] > upper[i] ||
+          (point[i] == upper[i] && !withUpper[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+public:
+  NaiveRangeCounter(std::vector<Point<T, S>> points) : points(points) {}
+
+  int countInRange(const std::vector<T> &lower,
+                   const std::vector<T> &upper,
+                   const std::vector<bool> &withLower,
+                   const std::vector<bool> &withUpper) const {
+    int count = 0;
+    for (int i = 0; i < points.size(); i++) {
+      if (pointInRange(points[i], lower, upper, withLower, withUpper)) {
+        count += points[i].count();
+      }
+    }
+    return count;
+  }
+
+  std::vector<Point<T, S>> pointsInRange(const std::vector<T> &lower,
+                                         const std::vector<T> &upper,
+                                         const std::vector<bool> &withLower,
+                                         const std::vector<bool> &withUpper) const {
+    std::vector<Point<T, S>> selectedPoints = {};
+    for (int i = 0; i < points.size(); i++) {
+      if (pointInRange(points[i], lower, upper, withLower, withUpper)) {
+        selectedPoints.push_back(points[i]);
+      }
+    }
+    return selectedPoints;
+  }
+};
+
 } // namespace RangeTree

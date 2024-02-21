@@ -1,15 +1,106 @@
 #pragma once
-#include "disjoint_set.hpp"
+#include "load.hpp"
 #include <algorithm>
+#include <bits/iterator_concepts.h>
 #include <chrono>
+#include <exception>
 #include <format>
 #include <initializer_list>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <ranges>
 
-namespace rich::style {
+namespace rich::io {
+template <typename TIter>
+class loader {
+  TIter iter;
+  using self_type = loader<TIter>;
+
+public:
+  loader(const TIter &iter) : iter(iter){};
+  template <typename T>
+  self_type &operator>>(T &data) {
+    data = *iter++;
+    return *this;
+  }
+  template <typename T1, typename T2>
+  self_type &operator>>(std::pair<T1, T2> &data) {
+    return *this >> data.first >> data.second;
+  }
+  template <typename... TArgs>
+  self_type &operator>>(std::tuple<TArgs...> &data) {
+    std::apply([&](auto &...args) { (*this >> ... >> args); }, data);
+    return *this;
+  }
+  template <typename... TArgs>
+  self_type &operator>>(std::vector<TArgs...> &data) {
+    size_t num;
+    *this >> num;
+    data.resize(num);
+    for (size_t i = 0; i < num; i++)
+      *this >> data[i];
+    return *this;
+  }
+  template <typename... TArgs>
+  self_type &operator>>(std::set<TArgs...> &data) {
+    size_t num;
+    *this >> num;
+    data.clear();
+    for (size_t i = 0; i < num; i++) {
+      typename std::set<TArgs...>::value_type v;
+      *this >> v;
+      data.insert(std::move(v));
+    }
+    return *this;
+  }
+  template <typename... TArgs>
+  self_type &operator>>(std::map<TArgs...> &data) {
+    size_t num;
+    *this >> num;
+    for (size_t i = 0; i < num; i++) {
+      typename std::map<TArgs...>::key_type k;
+      typename std::map<TArgs...>::mapped_type v;
+      *this >> k >> v;
+      data.insert_or_assign(std::move(k), std::move(v));
+    }
+    return *this;
+  }
+  template <typename T>
+  self_type &operator>>(std::optional<T> &data) {
+    return *this >> data.value();
+  }
+};
+
+template <typename T>
+T load(const std::filesystem::path &path) {
+  auto ifs = std::ifstream{path};
+  T data;
+  loader(std::istream_iterator<size_t>{ifs}) >> data;
+  return data;
+}
+} // namespace rich::io
+
+namespace rich::ansi {
+inline constexpr std::string_view DEFAULT = "\033[0m";
+inline constexpr std::string_view BOLD = "\033[1m";
+inline constexpr std::string_view DIM = "\033[2m";
+inline constexpr std::string_view UNDERLINE = "\033[4m";
+inline constexpr std::string_view BLINK = "\033[5m";
+inline constexpr std::string_view REVERSE = "\033[7m";
+inline constexpr std::string_view HIDE = "\033[8m";
+inline constexpr std::string_view BLACK = "\033[30m";
+inline constexpr std::string_view RED = "\033[31m";
+inline constexpr std::string_view GREEN = "\033[32m";
+inline constexpr std::string_view YELLOW = "\033[33m";
+inline constexpr std::string_view BLUE = "\033[34m";
+inline constexpr std::string_view MAGENTA = "\033[35m";
+inline constexpr std::string_view CYAN = "\033[36m";
+inline constexpr std::string_view WHITE = "\033[37m";
+} // namespace rich::ansi
+
+namespace rich {
 
 enum class Style {
   Default,
@@ -30,161 +121,267 @@ enum class Style {
   Hide,
 };
 
-inline constexpr auto ansi(std::string_view s, std::initializer_list<Style> styles = {}) {
-  auto res = std::string{s};
-  for (auto style : styles) {
-    res = std::format("\033[{}m{}\033[0m",
-                      style == Style::Black ? 30 : style == Style::Red     ? 31
-                                               : style == Style::Green     ? 32
-                                               : style == Style::Yellow    ? 33
-                                               : style == Style::Blue      ? 34
-                                               : style == Style::Magenta   ? 35
-                                               : style == Style::Cyan      ? 36
-                                               : style == Style::White     ? 37
-                                               : style == Style::Bold      ? 1
-                                               : style == Style::Dim       ? 2
-                                               : style == Style::Underline ? 4
-                                               : style == Style::Blink     ? 5
-                                               : style == Style::Reverse   ? 7
-                                               : style == Style::Hide      ? 8
-                                                                           : 39,
-                      res);
-  }
-  return res;
+template <typename T>
+std::string render(const T &context, std::initializer_list<Style> styles) {
+  return render(std::format("{}", context), styles);
 }
-} // namespace rich::style
 
-namespace rich::views {
-
-template <std::ranges::sized_range R>
-class track_view : public std::ranges::view_interface<track_view<R>> {
-private:
-  using TIter = std::ranges::iterator_t<R>;
-
-  struct iterator {
-    using value_type = typename std::iterator_traits<TIter>::difference_type;
-    using iterator_category = typename std::iterator_traits<TIter>::iterator_category;
-    using reference = typename std::iterator_traits<TIter>::reference;
-    using difference_type = typename std::iterator_traits<TIter>::difference_type;
-    std::array<std::string, 6> spinner = {"⠋", "⠙", "⠸", "⠴", "⠦", "⠇"};
-    std::string done_char = style::ansi("━", {style::Style::Red});
-    std::string todo_char = style::ansi("━", {style::Style::Red, style::Style::Dim});
-    std::string description = style::ansi("Working...", {style::Style::Yellow});
-    std::string finished_description = style::ansi("Done      ", {style::Style::Yellow});
-    std::chrono::system_clock::time_point start_time;
-
-  private:
-    TIter iter;
-    difference_type length;
-    difference_type num_step;
-    static constexpr size_t width = 30;
-
-  public:
-    iterator(const TIter &iter, difference_type length) : iter(iter), length(length), num_step(length), start_time(std::chrono::system_clock::now()){};
-    difference_type count() const { return length; }
-
-    void update() {
-      size_t percentage = (num_step - length) * 100 / num_step;
-      auto duration = std::chrono::hh_mm_ss(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start_time));
-      std::string bar;
-      for (size_t i = 0; i < width; i++)
-        bar.append(i * 100 < percentage * width ? done_char : todo_char);
-      std::clog << std::format("\r\033[34m{}\033[0m \033[32m{}\033[0m {} \033[35m{:3}%\033[0m {}{}",
-                               count() == 0 ? "✓" : spinner[(num_step - length) % spinner.size()],
-                               duration,
-                               bar,
-                               percentage,
-                               count() == 0 ? finished_description : description,
-                               count() == 0 ? "\n" : "");
-    }
-    iterator &operator++() {
-      ++iter;
-      length--;
-      update();
-      return *this;
-    }
-    iterator &operator++(int) {
-      auto temp = *this;
-      ++(*this);
-      return temp;
-    }
-    reference operator*() const {
-      return *iter;
-    }
-    friend constexpr auto operator<=>(const iterator &a, const iterator &b) {
-      return a.count() <=> b.count();
-    }
-    friend constexpr bool operator==(const iterator &a, std::default_sentinel_t) {
-      return a.count() == 0;
-    }
-  };
-
-public:
-  track_view(R &&rng) : base(std::forward<R>(rng)){};
-  auto begin() { return iterator{std::ranges::begin(base), std::ranges::ssize(base)}; }
-  auto end() { return std::default_sentinel; }
-
-private:
-  R base;
-};
-
-struct track {
-  template <std::ranges::range R>
-  friend constexpr auto operator|(R &&rng, track t) {
-    return track_view<R>(std::forward<R>(rng));
+inline std::string render(std::string context, std::initializer_list<Style> styles) {
+  std::string style_code;
+  for (auto style : styles) {
+    style_code +=
+        style == Style::Black ? ansi::BLACK : style == Style::Red     ? ansi::RED
+                                          : style == Style::Green     ? ansi::GREEN
+                                          : style == Style::Yellow    ? ansi::YELLOW
+                                          : style == Style::Blue      ? ansi::BLUE
+                                          : style == Style::Magenta   ? ansi::MAGENTA
+                                          : style == Style::Cyan      ? ansi::CYAN
+                                          : style == Style::White     ? ansi::WHITE
+                                          : style == Style::Bold      ? ansi::BOLD
+                                          : style == Style::Dim       ? ansi::DIM
+                                          : style == Style::Underline ? ansi::UNDERLINE
+                                          : style == Style::Blink     ? ansi::BLINK
+                                          : style == Style::Reverse   ? ansi::REVERSE
+                                          : style == Style::Hide      ? ansi::HIDE
+                                                                      : ansi::DEFAULT;
   }
-};
+  return style_code.append(context).append(ansi::DEFAULT);
+}
 
-} // namespace rich::views
-
-// namespace rich::console {
-//   template <typename T>
-//   inline void show(const T& data){
-//     std::clog<<data;
-//   }
-// }
-
-namespace rich {
-class console {
+class Console {
   std::ostream &logs;
 
 public:
-  console(std::ostream &logs = std::clog) : logs(logs) {}
+  Console(std::ostream &logs = std::clog) : logs(logs) {}
   void rule(std::string context) {
     std::ranges::transform(context, context.begin(), ::toupper);
-    logs << style::ansi(std::format("# [{}] ", context), {style::Style::Red}) << style::ansi(std::format("{:%T}\n", std::chrono::system_clock::now()));
+    logs << render(std::format("# [{}]\n", context), {Style::Red});
   }
   void para(std::string context) {
     std::ranges::transform(context, context.begin(), ::tolower);
-    logs << std::format("{} {}\n", style::ansi("|", {style::Style::Dim}), context);
-  }
-  void show(std::string_view value) {
-    logs << value;
-  }
-  template <typename T> requires std::is_arithmetic_v<T>
-  void show(const T &value) {
-    logs << style::ansi(std::format("{}",value),{style::Style::Magenta});
+    logs << std::format("{} {}\n", render("|", {Style::Dim}), context);
   }
   template <typename T>
-  void show(const std::span<T> value) {
-    show<
-    // show("[");
-    // for (std::string delimiter = ""; auto &&x : value)
-    //   show(delimiter), show(x), delimiter = ", ";
-    // show("]");
+  void show(const T &value) {
+    logs << render("| ", {Style::Dim});
+    pretty_print(value);
+    logs << '\n';
+  }
+  template <typename T>
+  T load(std::filesystem::path path) {
+    logs << std::format("{} load data from file {}\n", render(">", {Style::Cyan}), path.string());
+    T data;
+    auto ifs = std::ifstream{path};
+    io::loader(std::istream_iterator<size_t>{ifs}) >> data;
+    return data;
+  }
+  template <typename T>
+  T read(std::string_view context) {
+    logs << render(std::format("> {}: ",context),{Style::Green});   
+    T data;
+    io::loader(std::istream_iterator<size_t>{std::cin})>>data;
+    return data;
   }
   template <std::ranges::range R>
-  void show(const R &rng, std::string_view opening = "{", std::string_view closing = "}", std::string_view delimiter = ", ") {
-    show(opening);
-    for (std::string delim = ""; auto &&x : rng)
-      show(delim), show(x), delim = delimiter;
-    show(closing);
+  auto track(const R &rng);
+
+  void progress(size_t num_step, size_t cur_step, std::chrono::hh_mm_ss<std::chrono::seconds> duration) {
+    size_t percentage = cur_step * 100 / num_step;
+    constexpr size_t width = 30;
+    const std::array<std::string, 6> spinner = {"⠋", "⠙", "⠸", "⠴", "⠦", "⠇"};
+    std::string bar;
+    for (size_t i = 0; i < width; i++)
+      bar.append(i * 100 < percentage * width ? render("━", {Style::Red}) : render("━", {Style::Red, Style::Dim}));
+    logs << std::format("\r{} {} {} {:3}% {:7}{}",
+                        render(percentage == 100 ? "✓" : spinner[cur_step % spinner.size()], {Style::Blue}),
+                        render(duration, {Style::Blue}),
+                        bar,
+                        render(percentage, {Style::Magenta}),
+                        render(percentage == 100 ? "Working" : "Done", {Style::Yellow}),
+                        percentage == 100 ? "\n" : "");
   }
-  template <typename... Args>
-  void show(const std::tuple<Args...> value) {
-    show("(");
-    std::apply([&](Args... x) { ((show(x), show(", ")), ...); }, value);
-    show(")");
+  template <typename T>
+  void pretty_print(const T &value) {
+    logs << value;
+  }
+  void pretty_print(std::string_view value) {
+    logs << '"' << value << '"';
+  }
+  template <typename T>
+  void pretty_print(const std::span<T> value) {
+    logs << '[';
+    for (std::string delim = ""; const auto &v : value)
+      logs << delim, pretty_print(v), delim = ", ";
+    logs << ']';
+  }
+  template <std::ranges::range R>
+  void pretty_print(const R &rng) {
+    logs << '{';
+    for (std::string delim = ""; const auto &v : rng)
+      logs << delim, pretty_print(v), delim = ", ";
+    logs << '}';
+  }
+  template <typename... TArgs>
+  void pretty_print(const std::tuple<TArgs...> &value) {
+    std::apply([&](TArgs &&...v) {
+      logs << '(';
+      std::string delim = "";
+      ((logs << delim, pretty_print(v), delim = ", "), ...);
+      logs << ')';
+    },value);
+  }
+  template <typename T, typename U>
+  void pretty_print(const std::pair<T,U> &value) {
+      logs << '(';
+      pretty_print(value.first);
+      logs << ", ";
+      pretty_print(value.second);
+      logs << ')';
+  }
+  template <typename... TArgs>
+  void pretty_print(const std::map<TArgs...> &value) {
+    logs << '{';
+    for (std::string delim = ""; auto &&[k, v] : value)
+      logs << delim, pretty_print(k), logs << " : ", pretty_print(v), delim = ", ";
+    logs << '}';
   }
 };
+
+static Console console;
+
+template <std::input_or_output_iterator I>
+struct progress_track_iterator {
+  using self_type = progress_track_iterator<I>;
+  using iterator_type = std::counted_iterator<I>;
+  using value_type = typename std::iterator_traits<iterator_type>::value_type;
+  using reference = typename std::iterator_traits<iterator_type>::reference;
+  using difference_type = typename std::iterator_traits<iterator_type>::difference_type;
+  using iterator_category = typename std::iterator_traits<iterator_type>::iterator_category;
+
+public:
+  progress_track_iterator(const I &iter, difference_type length, Console& target) : iter({iter,length}), num_step(length), start_time(std::chrono::system_clock::now()), target(target){};
+
+private:
+  iterator_type iter;
+  Console target;
+  difference_type num_step;
+  std::chrono::system_clock::time_point start_time;
+public:
+  self_type &operator++() {
+    ++iter;
+    target.progress(num_step,num_step-iter.count(),std::chrono::hh_mm_ss{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now()-start_time)});
+    return *this;
+  }
+  self_type &operator++(int) {
+    auto temp = *this;
+    ++(*this);
+    return temp;
+  }
+  reference operator*() {
+    return *iter;
+  }
+  friend constexpr auto operator<=>(const self_type &a, const self_type &b) {
+    return a.iter <=> b.iter();
+  }
+  friend constexpr bool operator==(const self_type &a, const std::default_sentinel_t) {
+    return a.iter == std::default_sentinel;
+  }
+};
+
+template <typename It, typename Sent>
+struct track_view {
+  It _begin;
+  Sent _end;
+  track_view(It a,Sent b):_begin(a),_end(b){}
+  auto begin()const {return _begin;}
+  auto end() const {return _end;}
+};
+
+template <std::ranges::range R>
+auto Console::track(const R &rng) {
+  return track_view{progress_track_iterator{std::ranges::begin(rng), std::ranges::ssize(rng),*this}, std::default_sentinel};
+}
 } // namespace rich
+
+// namespace rich::views {
+
+// template <std::ranges::sized_range R>
+// class track_view : public std::ranges::view_interface<track_view<R>> {
+// private:
+//   using TIter = std::ranges::iterator_t<R>;
+
+//   struct iterator {
+//     using value_type = typename std::iterator_traits<TIter>::difference_type;
+//     using iterator_category = typename std::iterator_traits<TIter>::iterator_category;
+//     using reference = typename std::iterator_traits<TIter>::reference;
+//     using difference_type = typename std::iterator_traits<TIter>::difference_type;
+//     std::array<std::string, 6> spinner = {"⠋", "⠙", "⠸", "⠴", "⠦", "⠇"};
+//     std::string done_char = render("━", {Style::Red});
+//     std::string todo_char = render("━", {Style::Red, Style::Dim});
+//     std::string description = render("Working...", {Style::Yellow});
+//     std::string finished_description = render("Done      ", {Style::Yellow});
+//     std::chrono::system_clock::time_point start_time;
+
+//   private:
+//     TIter iter;
+//     difference_type length;
+//     difference_type num_step;
+//     static constexpr size_t width = 30;
+
+//   public:
+//     iterator(const TIter &iter, difference_type length) : iter(iter), length(length), num_step(length), start_time(std::chrono::system_clock::now()){};
+//     difference_type count() const { return length; }
+
+//     void update() {
+//       size_t percentage = (num_step - length) * 100 / num_step;
+//       auto duration = std::chrono::hh_mm_ss(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start_time));
+//       std::string bar;
+//       for (size_t i = 0; i < width; i++)
+//         bar.append(i * 100 < percentage * width ? done_char : todo_char);
+//       std::clog << std::format("\r\033[34m{}\033[0m \033[32m{}\033[0m {} \033[35m{:3}%\033[0m {}{}",
+//                                count() == 0 ? render("✓", {Style::Dim}) : spinner[(num_step - length) % spinner.size()],
+//                                duration,
+//                                bar,
+//                                percentage,
+//                                count() == 0 ? finished_description : description,
+//                                count() == 0 ? "\n" : "");
+//     }
+//     iterator &operator++() {
+//       ++iter;
+//       length--;
+//       update();
+//       return *this;
+//     }
+//     iterator &operator++(int) {
+//       auto temp = *this;
+//       ++(*this);
+//       return temp;
+//     }
+//     reference operator*() const {
+//       return *iter;
+//     }
+//     friend constexpr auto operator<=>(const iterator &a, const iterator &b) {
+//       return a.count() <=> b.count();
+//     }
+//     friend constexpr bool operator==(const iterator &a, std::default_sentinel_t) {
+//       return a.count() == 0;
+//     }
+//   };
+
+// public:
+//   track_view(R &&rng) : base(std::forward<R>(rng)){};
+//   auto begin() { return iterator{std::ranges::begin(base), std::ranges::ssize(base)}; }
+//   auto end() { return std::default_sentinel; }
+
+// private:
+//   R base;
+// };
+
+// struct track {
+//   template <std::ranges::range R>
+//   friend constexpr auto operator|(R &&rng, track t) {
+//     return track_view<R>(std::forward<R>(rng));
+//   }
+// };
+
+// } // namespace rich::views

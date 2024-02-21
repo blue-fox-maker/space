@@ -35,7 +35,7 @@ print(f"Load {G} in [0, {lifespan})")
 
 df.to_csv(f"data.txt" ,sep=' ',index=False,header=False)
 
-operations = questionary.checkbox("What do you want?", choices=["temporal core", "connected components"]).ask()
+operations = questionary.checkbox("What do you want?", choices=["temporal core", "connected components", "connected core"]).ask()
 if "temporal core" in operations:
     k = int(questionary.text("input k", default="3", validate= lambda x: x.isdigit()).ask())
     with open(f"data_core.txt", "w") as file:
@@ -65,5 +65,20 @@ if "connected components" in operations:
                     for v in cc:
                         file.write(f"{v} ")
                 file.write('\n')
-
+if "connected core" in operations:
+    k = int(questionary.text("input k", default="3", validate= lambda x: x.isdigit()).ask())
+    with open(f"data_ccc.txt", "w") as file:
+        file.write(f"{len(G.nodes)} {len(G.edges)} {lifespan}\n")
+        file.write(f"{(lifespan+1)*lifespan//2}\n")
+        for ts in track(range(lifespan)):
+            projected_graph = nx.Graph()
+            for te in range(ts,lifespan):
+                projected_graph.add_edges_from(snapshots[te].edges)
+                communities = list(nx.connected_components(nx.k_core(projected_graph,k)))
+                file.write(f"{ts} {te} {len(communities)} ")
+                for community in communities:
+                    file.write(f"{len(community)} ")
+                    for v in community:
+                        file.write(f"{v} ")
+                file.write('\n')
 
