@@ -1,6 +1,4 @@
 #include <concepts>
-#include <set>
-#include <numeric>
 #include <span>
 #include <vector>
 #include <ranges>
@@ -63,61 +61,6 @@ adjacent_array load_graph<adjacent_array>(const std::filesystem::path& path)
   }
   return graph;
 }
-
-template <AdjacencyGraph G>
-auto core_value(const G& graph) -> std::vector<typename G::vert_t> {
-  using vert_t = typename G::vert_t;
-  using edge_t = typename G::edge_t;
-  using size_type = typename G::size_type;
-  auto cur_deg = std::vector<size_t>(graph.verts().size());
-  for (auto &&v:graph.verts())
-    cur_deg[v] = graph.neighbors(v).size();
-  size_t max_deg = std::ranges::max(cur_deg);
-  auto bin = std::vector<size_t>(max_deg + 1);
-  auto pos = std::vector<size_t>(graph.verts().size());
-  auto vert = std::vector<size_t>(graph.verts().size());
-  auto bucket = std::vector<std::vector<vert_t>>(max_deg + 1);
-  for (auto &&v:graph.verts())
-    bucket[cur_deg[v]].push_back(v);
-  std::ranges::copy(bucket | std::views::join, vert.begin());
-  for (size_type i = 0; i < max_deg + 1; i++)
-    bin[i] = bucket[i].size();
-  std::partial_sum(bin.begin(), bin.end(), bin.begin());
-  for (auto &&v:graph.verts())
-    pos[vert[v]] = v;
-  for (size_type i = 0; i < max_deg; i++)
-    bin[max_deg - i] = bin[max_deg - i - 1];
-  bin[0] = 0;
-  auto result = std::vector<size_t>(graph.verts().size());
-  dbg(bin, pos, vert, cur_deg);
-  for (size_t i = 0; i < graph.verts().size(); i++) {
-    vert_t v = vert[i];
-    result[v] = cur_deg[v];
-    for (auto u : graph.neighbors(v)) {
-      if (cur_deg[u] != cur_deg[v]) {
-        vert_t w = vert[bin[cur_deg[u]]];
-        std::swap(vert[pos[u]], vert[pos[w]]);
-        std::swap(pos[u], pos[w]);
-        cur_deg[u]--;
-      }
-    }
-  }
-  return result;
-}
-
-template <AdjacencyGraph G>
-G induce(const G& graph, const std::set<typename G::vert_t>& verts)
-{
-  std::vector<typename G::size_type> vert_to_index{graph.verts().size()};
-  adjacent_array result{verts.size()};
-  for(auto&&[i,v]: std::views::enumerate(verts))
-    vert_to_index[v] = i;
-  for(auto&& v:verts)  
-    for(auto &&u:graph.neighbors(v)|std::views::filter([&](const auto& x){verts.contains(x);}))
-      result.add_edge(vert_to_index[v],vert_to_index[u]);
-  return result;
-}
-
 
 size_t rec_time = 0;
 template <AdjacencyGraph G>
@@ -205,23 +148,43 @@ void bron_kerbosch_pivot(
 }
 
 template <AdjacencyGraph G>
-void D2K(const G &graph, typename G::size_type k, const std::function<void(const std::vector<typename G::vert_t> &)> &reporter)
-{
-  using size_type = typename G::size_type;
-  using vert_t = typename G::vert_t;
-  using edge_t = typename G::edge_t;
-  auto core_values = core_value(graph);  
-  std::vector degeneracy_ordering{graph.verts()};
-  auto eta_less = [&](auto x, auto y){return degeneracy_ordering[x]<degeneracy_ordering[y];};
-  std::ranges::sort(degeneracy_ordering,eta_less);
-  for (auto &&v: degeneracy_ordering)
-  {
-    std::vector<vert_t> hop1{graph.neighbors(v)};
-    hop1.push_back(v);
-    std::vector<vert_t> hop2;
-    for (auto &&u: hop1)
-      for (auto &&w: graph.neighbors(u))
-        hop2.push_back(w);
-        
+auto core_value(const G& graph) -> std::vector<vert_t> {
+  auto cur_deg = std::vector<size_t>(num_vert());
+  for (size_t i = 0; i < num_vert(); i++)
+    cur_deg[i] = degree(vertex()[i]);
+  size_t max_deg = std::ranges::max(cur_deg);
+  auto bin = std::vector<size_t>(max_deg + 1);
+  auto pos = std::vector<size_t>(num_vert());
+  auto vert = std::vector<size_t>(num_vert());
+  auto bucket = std::vector<std::vector<vert_t>>(max_deg + 1);
+  for (size_t i = 0; i < num_vert(); i++)
+    bucket[cur_deg[i]].push_back(i);
+  std::ranges::copy(bucket | std::views::join, vert.begin());
+  for (size_t i = 0; i < max_deg + 1; i++)
+    bin[i] = bucket[i].size();
+  std::partial_sum(bin.begin(), bin.end(), bin.begin());
+  for (size_t i = 0; i < num_vert(); i++)
+    pos[vert[i]] = i;
+  for (size_t i = 0; i < max_deg; i++)
+    bin[max_deg - i] = bin[max_deg - i - 1];
+  bin[0] = 0;
+  auto result = std::vector<size_t>(num_vert());
+  auto vert_to_index = std::vector<size_t>(size());
+  for (size_t i = 0; i < num_vert(); i++)
+    vert_to_index[vertex()[i]] = i;
+  dbg(bin, pos, vert, cur_deg);
+  for (size_t i = 0; i < num_vert(); i++) {
+    vert_t v = vert[i];
+    result[v] = cur_deg[v];
+    for (auto u : neighbor(vertex()[v])) {
+      u = vert_to_index[u];
+      if (cur_deg[u] != cur_deg[v]) {
+        vert_t w = vert[bin[cur_deg[u]]];
+        std::swap(vert[pos[u]], vert[pos[w]]);
+        std::swap(pos[u], pos[w]);
+        cur_deg[u]--;
+      }
+    }
   }
+  return result;
 }
