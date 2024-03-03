@@ -508,6 +508,21 @@ namespace termcolor
         return stream;
     }
 
+    template <typename CharT>
+    std::basic_ostream<CharT>& default_fg(std::basic_ostream<CharT>& stream)
+    {
+        if (_internal::is_colorized(stream))
+        {
+        #if defined(TERMCOLOR_USE_ANSI_ESCAPE_SEQUENCES)
+            stream << "\033[39m";
+        #elif defined(TERMCOLOR_USE_WINDOWS_API)
+            _internal::win_change_attributes(stream,
+                FOREGROUND_DEFAULT | FOREGROUND_INTENSITY
+            );
+        #endif
+        }
+        return stream;
+    }
 
     template <typename CharT>
     std::basic_ostream<CharT>& on_grey(std::basic_ostream<CharT>& stream)
