@@ -41,6 +41,4 @@ int main(){
   rich::console.render("another question arised");
   rich::console.render();
   rich::console.render("is it convinient for us to do something like this?");
-
-
 }
