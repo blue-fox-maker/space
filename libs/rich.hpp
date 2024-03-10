@@ -4,7 +4,6 @@
 #include <source_location>
 #include <optional>
 #include <ranges>
-#include <stacktrace>
 #include <string>
 #include <type_traits>
 #include <utility>
