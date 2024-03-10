@@ -1,5 +1,4 @@
 #pragma once
-// #include "termcolor.hpp"
 #include <functional>
 #include <limits>
 #include <source_location>
@@ -291,24 +290,3 @@ private:
 
 static basic_console console; 
 }; // namespace rich
-
-// template <typename T> requires std::is_arithmetic_v<T> 
-// struct std::formatter<rich::renderable<T>>;
-// template <>
-// struct std::formatter<rich::renderable<std::string>>;
-// template <>
-// struct std::formatter<rich::renderable<char>>;
-// template <>
-// struct std::formatter<rich::renderable<std::source_location>>;
-// template <typename ...Args>
-// struct std::formatter<rich::renderable<std::chrono::duration<Args...>>>;
-// template <typename T>
-// struct std::formatter<rich::renderable<std::chrono::hh_mm_ss<T>>>;
-// template <std::ranges::random_access_range T> 
-// struct std::formatter<rich::renderable<T>>;
-// template <std::ranges::range T> 
-// struct std::formatter<rich::renderable<T>>;
-// template <typename ...Args>
-// struct std::formatter<rich::renderable<std::tuple<Args...>>>;
-// template <typename ...Args>
-// struct std::formatter<rich::renderable<std::pair<Args...>>>;
