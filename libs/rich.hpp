@@ -222,19 +222,16 @@ bool _load(std::istream& is, std::set<T,Args...>& val){
 
 namespace rich {
 
-
 class basic_console {
 public:
-  std::ostream &os = std::cout;
   std::istream &is = std::cin;
+  std::ostream &os = std::cout;
 
-  void render(std::string&& context = "", auto &&...args){
-    auto result = context;
-    if(result.starts_with("# ")) result = style::reset_bold + style::set_underline + "# " + std::move(result).substr(2);   
-    if(result.starts_with("- ")) result = "  • " + std::move(result).substr(2);
-    if(result.starts_with("> ")) result = style::set_italic + "  ┃ " + std::move(result).substr(2);
-    println(std::move(result),std::forward<decltype(args)>(args)...);
-    os << style::reset;
+  void println(std::string_view context = "", auto &&...args){
+    os << std::vformat(std::move(context),std::make_format_args(renderable{std::forward<decltype(args)>(args)}...)) <<std::endl;      
+  }
+  void print(std::string_view context = "", auto &&...args){
+    os << std::vformat(std::move(context),std::make_format_args(renderable{std::forward<decltype(args)>(args)}...)) <<std::flush;      
   }
   template <typename T>
   T read(std::function<bool(const T&)> verify,std::string&& prompt, auto &&...args){
@@ -261,7 +258,7 @@ public:
   }
   template <typename Func, std::ranges::range R>
   void bench(const Func& func, R&& args_range, std::source_location location = std::source_location::current()){
-    render("benchmark at {}",location);
+    println("benchmark at {}",location);
     auto time_start = std::chrono::system_clock::now();
     for (auto &&args_tuple: track(std::forward<R>(args_range))){
       std::apply([&](auto&&...args){func(std::forward<decltype(args)>(args)...);}, std::forward<decltype(args_tuple)>(args_tuple));
@@ -269,12 +266,6 @@ public:
     auto time_cost = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - time_start); 
   }
 private:
-  void println(std::string_view context = "", auto &&...args){
-    os << std::vformat(std::move(context),std::make_format_args(renderable{std::forward<decltype(args)>(args)}...)) <<std::endl;      
-  }
-  void print(std::string_view context = "", auto &&...args){
-    os << std::vformat(std::move(context),std::make_format_args(renderable{std::forward<decltype(args)>(args)}...)) <<std::flush;      
-  }
   void progress(size_t num_step, size_t cur_step, std::chrono::hh_mm_ss<std::chrono::seconds> duration, std::string_view description) {
     size_t percentage = cur_step * 100 / num_step;
     const std::array<std::string_view, 6> spinner = {"⠋", "⠙", "⠸", "⠴", "⠦", "⠇"};
@@ -285,7 +276,6 @@ private:
     os <<std::format("\r{} {} {} {:3}% {}", percentage==100? std::string_view("✓") : spinner[cur_step % spinner.size()], renderable{duration}, bar, renderable{percentage}, description) << std::flush;
   }
 };
-
 
 static basic_console console; 
 }; // namespace rich

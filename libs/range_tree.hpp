@@ -6,6 +6,7 @@
 template <size_t Dimension>
 class range_tree_node{
   using size_type = typename range_tree_node<Dimension-1>::size_type;
+  using node_type = range_tree_node<Dimension-1>;
   using key_type = std::array<size_type,Dimension>;
   template <std::output_iterator<size_type> I>
   void query(const key_type& lower, const key_type& upper, I iter){
@@ -13,6 +14,8 @@ class range_tree_node{
     const auto upper_key = std::get<0>(upper);
     // the range tree query something
   }
+private:
+  // std::vector<node_type> 
 };
 
 template <>
