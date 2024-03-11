@@ -25,18 +25,18 @@ int main(){
   rich::console.println("but if there is a line break between every line");
   rich::console.println("but if there is a line break between every line");
   rich::console.println();
-  auto [x,y] = rich::console.read<std::pair<int,std::string>>("> input a integer and a string");
-  rich::console.println("the input is {} and {}",x,y);
+  // auto [x,y] = rich::console.read<std::pair<int,std::string>>("> input a integer and a string");
+  // rich::console.println("the input is {} and {}",x,y);
   rich::console.println();
   rich::console.println("it may look bad");
   rich::console.println();
   rich::console.println("> when in rome, do as romans do");
   rich::console.println();
   rich::console.println("the bench of sleep");
-  rich::console.bench([](auto x){ 
-    auto a = x;
-    std::this_thread::sleep_for(0.1s);
-  },a);
+  // rich::console.bench([](auto x){ 
+  //   auto a = x;
+  //   std::this_thread::sleep_for(0.1s);
+  // },a);
   rich::console.println();
   rich::console.println("another question arised");
   rich::console.println();

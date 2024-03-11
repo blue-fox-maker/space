@@ -226,9 +226,10 @@ class basic_console {
 public:
   std::istream &is = std::cin;
   std::ostream &os = std::cout;
+  const std::string newline = "  \n";
 
   void println(std::string_view context = "", auto &&...args){
-    os << std::vformat(std::move(context),std::make_format_args(renderable{std::forward<decltype(args)>(args)}...)) <<std::endl;      
+    os << std::vformat(std::move(context),std::make_format_args(renderable{std::forward<decltype(args)>(args)}...)) << newline <<std::flush;      
   }
   void print(std::string_view context = "", auto &&...args){
     os << std::vformat(std::move(context),std::make_format_args(renderable{std::forward<decltype(args)>(args)}...)) <<std::flush;      
