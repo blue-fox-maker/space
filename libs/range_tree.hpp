@@ -2,51 +2,94 @@
 #include <algorithm>
 #include <ranges>
 #include <map>
+#include "../libs/rich.hpp"
 
-template <size_t Dimension>
-class range_tree_node{
-  using size_type = typename range_tree_node<Dimension-1>::size_type;
-  using node_type = range_tree_node<Dimension-1>;
-  using key_type = std::array<size_type,Dimension>;
-  template <std::output_iterator<size_type> I>
-  void query(const key_type& lower, const key_type& upper, I iter){
-    const auto lower_key = std::get<0>(lower);
-    const auto upper_key = std::get<0>(upper);
-    // the range tree query something
-  }
-private:
-  // std::vector<node_type> 
-};
-
-template <>
-class range_tree_node<1>{
-  using size_type = size_t;
-  using key_type = std::array<size_type,1>;
-  template <std::output_iterator<size_type> I>
-  void query(const key_type& lower,const key_type& upper ,I iter){
-    std::ranges::copy(std::ranges::lower_bound(data,std::get<0>(lower)), std::ranges::upper_bound(data,std::get<0>(upper)),iter);
-  }
+template <typename T>
+struct tree_view{
+  using container = std::span<T>; 
+  using element_type = typename container::element_type;
+  using value_type = typename container::value_type;
+  using size_type = typename container::size_type;
+  using difference_type = typename container::difference_type;
+  using reference = typename container::reference;
+  using self_type = tree_view<T>;
+  [[nodiscard]] reference root() const noexcept { return c[c.size()/2];}
+  [[nodiscard]] constexpr self_type lower_child() const noexcept { return c.subspan(0,c.size()/2);}
+  [[nodiscard]] constexpr self_type upper_child() const noexcept { return c.subspan(c.size()/2+1);}
+  [[nodiscard]] constexpr bool empty() const noexcept { return c.empty();} 
+  [[nodiscard]] constexpr bool has_lower_child() const noexcept { return c.size()>=2;}
+  [[nodiscard]] constexpr bool has_upper_child() const noexcept { return c.size()>=3;}
+  [[nodiscard]] constexpr size_type size() const noexcept { return c.size();}
+  tree_view(container c):c(c){}
   
-private:
-  std::vector<size_type> data;
+  container c;
 };
 
-template <typename T, size_t Dimension> 
-class range_tree {
+template <typename TPoint, size_t Dimension = std::tuple_size_v<TPoint>>
+class range_tree_node{
 public:
-  using node_type = range_tree_node<Dimension>;
-  using size_type = typename node_type::size_type;
-  using mapped_type = T;
-  using key_type = std::array<size_type,Dimension>;
+  using point_type = TPoint;
+  using key_type = std::tuple_element_t<Dimension-1,point_type>;
+  using node_type = range_tree_node<TPoint,Dimension-1>;
+  key_type key;
+  range_tree_node() = default;
+  range_tree_node(std::span<point_type> points):nodes(2*points.size()-1){
+    rich::console.println("init node of dim {} with points {}", Dimension, points);
+    std::ranges::sort(points,{},[](const auto&x){return std::get<Dimension-1>(x);});
+    key = std::get<Dimension-1>(points[points.size()/2]);
+    build_tree(tree_view<node_type>{std::span<node_type>{nodes}},points);
+  }
+  void build_tree(tree_view<node_type> tree, std::span<point_type> points){
+    rich::console.println("size of tree {} and of points {}", tree.size(), points.size());
+    if(points.size()==0) return;
+    auto mid = (points.size()-1)/2;
+    if(!tree.empty())
+      tree.root() = node_type{points};
+    if(tree.has_lower_child())
+      build_tree(tree.lower_child(), points.subspan(0,mid+1));
+    if(tree.has_upper_child())
+      build_tree(tree.upper_child(), points.subspan(mid+1));
+  }
+  auto query(const point_type& lower, const point_type upper){
+    auto tree = tree_view<node_type>{std::span<node_type>{nodes}};
+    while(tree.root().key)
+  }
+  const auto& data()const { return nodes;}
+private:
+  std::vector<node_type> nodes;
+};
 
-  range_tree(const std::map<key_type,mapped_type> &values):data(values.size()){
-    std::ranges::copy(values|std::views::values,data.begin());
-    std::vector<key_type> temp(values.size());
-    std::ranges::copy(values|std::views::keys,temp.begin());
-    root = temp;
+template <typename TPoint>
+class range_tree_node<TPoint,0>{
+public:
+  range_tree_node() = default;
+  using point_type = TPoint;
+  using key_type = std::tuple_element_t<0,point_type>;
+  range_tree_node(std::span<point_type> points){
+    key = std::get<0>(points[(points.size()-1)/2]);
+  }
+  key_type key;
+};
+
+template <typename TPoint, typename TVal>
+class range_tree{
+public:
+  using value_type = TVal;
+  using point_type = TPoint;
+  using size_type = size_t;
+  template <std::ranges::input_range R>
+  explicit range_tree(R&&rng){
+    std::ranges::copy(rng|std::views::values,std::back_inserter(values));
+    std::vector<point_type> points(values.size());
+    std::ranges::copy(rng|std::views::keys,points.begin());
+    rich::console.println("the points are {}",points);
+    root = range_tree_node<point_type>{points};
+  }
+  const auto data() const { return root.data();}
+  auto query(const point_type &lower, const point_type &upper ){
+    root.query(lower,upper);
   }
 private:
-  std::vector<mapped_type> data;
-  range_tree_node<Dimension> root; //? really
+  std::vector<value_type> values;
+  range_tree_node<point_type> root;
 };
-

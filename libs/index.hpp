@@ -5,7 +5,6 @@
 #include <vector>
 #include <algorithm>
 #include <ranges>
-#include "rich.hpp"
 #include "disjoint_set.hpp"
 
 class temporal_index {
@@ -28,14 +27,6 @@ public:
         count ++;
       }
     }
-    auto temp =std::set<std::set<value_t>>(result);
-    size_t shouldbe = 0;
-    // rich::console.println("num of edges {},  ",count );
-    count += temp.size();
-    for (auto && x: temp){
-      shouldbe += x.size();
-    }
-    rich::console.println("should be {}, got {}",shouldbe,count);
     return result;
   }
 
