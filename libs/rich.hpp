@@ -1,4 +1,5 @@
 #pragma once
+#include <execution>
 #include <functional>
 #include <limits>
 #include <source_location>
@@ -20,32 +21,32 @@
 #include <iostream>
 
 namespace rich::style{
-constexpr std::string set_bold        ="\033[1m";
-constexpr std::string set_dim         ="\033[2m";
-constexpr std::string set_italic      ="\033[3m";
-constexpr std::string set_underline   ="\033[4m";
-constexpr std::string set_blink       ="\033[5m";
-constexpr std::string set_reverse     ="\033[7m";
-constexpr std::string set_conceal     ="\033[8m";
-constexpr std::string set_strike      ="\033[9m";
-constexpr std::string set_black       ="\033[30m";
-constexpr std::string set_red         ="\033[31m";
-constexpr std::string set_green       ="\033[32m";
-constexpr std::string set_yellow      ="\033[33m";
-constexpr std::string set_blue        ="\033[34m";
-constexpr std::string set_magenta     ="\033[35m";
-constexpr std::string set_cyan        ="\033[36m";
-constexpr std::string set_white       ="\033[37m";
-constexpr std::string reset           ="\033[0m";
-constexpr std::string reset_bold      ="\033[22m";
-constexpr std::string reset_dim       ="\033[22m";
-constexpr std::string reset_italic    ="\033[23m";
-constexpr std::string reset_underline ="\033[24m";
-constexpr std::string reset_blink     ="\033[25m";
-constexpr std::string reset_reverse   ="\033[27m";
-constexpr std::string reset_conceal   ="\033[28m";
-constexpr std::string reset_strike    ="\033[29m";
-constexpr std::string reset_fg        ="\033[39m";
+const std::string set_bold        ="\033[1m";
+const std::string set_dim         ="\033[2m";
+const std::string set_italic      ="\033[3m";
+const std::string set_underline   ="\033[4m";
+const std::string set_blink       ="\033[5m";
+const std::string set_reverse     ="\033[7m";
+const std::string set_conceal     ="\033[8m";
+const std::string set_strike      ="\033[9m";
+const std::string set_black       ="\033[30m";
+const std::string set_red         ="\033[31m";
+const std::string set_green       ="\033[32m";
+const std::string set_yellow      ="\033[33m";
+const std::string set_blue        ="\033[34m";
+const std::string set_magenta     ="\033[35m";
+const std::string set_cyan        ="\033[36m";
+const std::string set_white       ="\033[37m";
+const std::string reset           ="\033[0m";
+const std::string reset_bold      ="\033[22m";
+const std::string reset_dim       ="\033[22m";
+const std::string reset_italic    ="\033[23m";
+const std::string reset_underline ="\033[24m";
+const std::string reset_blink     ="\033[25m";
+const std::string reset_reverse   ="\033[27m";
+const std::string reset_conceal   ="\033[28m";
+const std::string reset_strike    ="\033[29m";
+const std::string reset_fg        ="\033[39m";
 }
 
 namespace rich{
@@ -63,7 +64,7 @@ struct std::formatter<rich::renderable<T>>:public std::formatter<T>{
   auto format(const rich::renderable<T> val, FmtContext &ctx) const {
     *ctx.out()++ = rich::style::set_magenta;
     std::formatter<T>::format(val.data,ctx);
-    **ctx.out()++ = rich::style::reset_fg;
+    *ctx.out()++ = rich::style::reset_fg;
     return ctx.out();
   }
 };
@@ -171,12 +172,19 @@ struct std::formatter<rich::renderable<std::pair<Args...>>>: public std::formatt
 };
 
 namespace rich::io {
-
 template <typename T>
-std::optional<T> load(std::istream& is = std::cin){
-  std::optional<T> result;
-  return _load(is,result.value())? result: std::nullopt; 
-}
+bool _load(std::istream&,T&);
+template <typename T>
+bool _load(std::istream&,std::optional<T>&);
+template <typename T1, typename T2>
+bool _load(std::istream&, std::pair<T1,T2>&);
+template <typename ...Args>
+bool _load(std::istream&, std::tuple<Args...>&);
+template <typename ...Args>
+bool _load(std::istream&, std::vector<Args...>&);
+template <typename T, typename ...Args>
+bool _load(std::istream&, std::set<T,Args...>&);
+
 template <typename T>
 bool _load(std::istream& is,T& val){
   is >> val;
@@ -217,6 +225,20 @@ bool _load(std::istream& is, std::set<T,Args...>& val){
   }
   return true;
 }
+template <typename T>
+bool _load(std::istream& is, std::optional<T>&val){
+  if(T temp;_load(is,temp))
+  {
+    val = std::move(temp); 
+    return true;
+  }
+  return false;
+}
+template <typename T>
+std::optional<T> load(std::istream& is = std::cin){
+  std::optional<T> result;
+  return _load(is,result)? result: std::nullopt; 
+}
 }
 
 
@@ -234,8 +256,11 @@ public:
   void print(std::string_view context = "", auto &&...args){
     os << std::vformat(std::move(context),std::make_format_args(renderable{std::forward<decltype(args)>(args)}...)) <<std::flush;      
   }
+  void render(std::string_view context = "", auto &&...args){
+    println(context,std::forward<decltype(args)>(args)...);
+  }
   template <typename T>
-  T read(std::function<bool(const T&)> verify,std::string&& prompt, auto &&...args){
+  T read(const std::function<bool(const T&)>& verify,std::string&& prompt, auto &&...args){
     print(std::move(prompt)+": ",std::forward<decltype(args)>(args)...);
     T res;
     while(!io::_load(is,res)||!verify(res)){
@@ -257,14 +282,20 @@ public:
         progress(total_step,i+1,std::chrono::hh_mm_ss{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now()-start_time)},description);
         return std::forward<decltype(v)>(v);});
   }
-  template <typename Func, std::ranges::range R>
-  void bench(const Func& func, R&& args_range, std::source_location location = std::source_location::current()){
-    println("benchmark at {}",location);
-    auto time_start = std::chrono::system_clock::now();
-    for (auto &&args_tuple: track(std::forward<R>(args_range))){
-      std::apply([&](auto&&...args){func(std::forward<decltype(args)>(args)...);}, std::forward<decltype(args_tuple)>(args_tuple));
-    }
-    auto time_cost = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - time_start); 
+  // template <typename Func, std::ranges::range R>
+  // void bench(const Func& func, R&& args_range, std::source_location location = std::source_location::current()){
+  //   println("benchmark at {}",location);
+  //   auto time_start = std::chrono::system_clock::now();
+  //   for (auto &&args_tuple: track(std::forward<R>(args_range))){
+  //     std::apply([&](auto&&...args){func(std::forward<decltype(args)>(args)...);}, std::forward<decltype(args_tuple)>(args_tuple));
+  //   }
+  //   auto time_cost = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - time_start); 
+  // }
+  template <std::invocable F>
+  std::invoke_result_t<F> bench(F&& func, std::source_location location = std::source_location::current()) noexcept(std::is_nothrow_invocable_v<F>){
+    auto time_lower = std::chrono::high_resolution_clock::now();
+    std::invoke(std::forward<F>(func));
+    println("function call at {} takes {}",location,std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()-time_lower));
   }
 private:
   void progress(size_t num_step, size_t cur_step, std::chrono::hh_mm_ss<std::chrono::seconds> duration, std::string_view description) {
@@ -274,7 +305,8 @@ private:
     constexpr size_t WIDTH = 30; 
     for (size_t i = 0; i < WIDTH; i++)
       bar.append(i<WIDTH*percentage/100? "━": " ");
-    os <<std::format("\r{} {} {} {:3}% {}", percentage==100? std::string_view("✓") : spinner[cur_step % spinner.size()], renderable{duration}, bar, renderable{percentage}, description) << std::flush;
+    const bool finished = percentage == 100;
+    os <<std::format("\r{} {} {} {:3}% {}{}", finished? std::string_view("✓") : spinner[cur_step % spinner.size()], renderable{duration}, bar, renderable{percentage}, description, finished?"\n":"") << std::flush;
   }
 };
 
