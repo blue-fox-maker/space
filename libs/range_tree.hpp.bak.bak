@@ -1,0 +1,187 @@
+#include "rich.hpp"
+#include <algorithm>
+#include <bits/ranges_algo.h>
+#include <iostream>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <ranges>
+#include <stdexcept>
+#include <tuple>
+#include <vector>
+
+// template <typename TPoint>
+// class SPM {
+  
+// };
+
+template <typename TPoint, size_t Dimension = std::tuple_size_v<TPoint>>
+class range_tree_node {
+public:
+  using point_type = TPoint;
+  using size_type = size_t;
+  using key_type = std::tuple_element_t<Dimension - 1, TPoint>;
+
+  range_tree_node() = default;
+  range_tree_node(std::span<std::pair<point_type, size_type>> points) {
+    // std::cout<<" "<<points.size();
+    if (points.empty())
+      throw std::logic_error("construct range tree with no point");
+    std::ranges::sort(points, {}, [](const auto &x) { return std::get<Dimension - 1>(x.first); });
+    auto mid = (points.size() - 1) / 2;
+    _key = std::get<Dimension - 1>(points[mid].first);
+    if (points.size() != 1) {
+      auto lower_iter = std::ranges::lower_bound(points,_key,{},[](const auto&x){return std::get<Dimension-1>(x.first);});
+      auto upper_iter = std::ranges::upper_bound(points,_key,{},[](const auto&x){return std::get<Dimension-1>(x.first);});
+      auto lower_span = std::span{points.begin(), lower_iter};
+      if (!lower_span.empty())
+        lower_child = std::make_shared<range_tree_node<TPoint, Dimension>>(lower_span);
+      auto upper_span = std::span{upper_iter,points.end()};
+      if (!upper_span.empty())
+        upper_child = std::make_shared<range_tree_node<TPoint, Dimension>>(upper_span);
+    }
+    next_dim = std::make_shared<range_tree_node<TPoint, Dimension - 1>>(points);
+  }
+  // range_tree_node(std::span<std::pair<point_type, size_type>> points) {
+  //   if (points.empty())
+  //     throw std::logic_error("construct range tree with no point");
+  //   std::ranges::sort(points, {}, [](const auto &x) { return std::get<Dimension - 1>(x.first); });
+  //   auto mid = (points.size() - 1) / 2;
+  //   _key = std::get<Dimension - 1>(points[mid].first);
+  //   if (points.size() != 1) {
+  //     auto iter = std::ranges::lower_bound(points,)
+  //     auto lower_span = points.subspan(0, (points.size() + 1) / 2);
+  //     if (!lower_span.empty())
+  //       lower_child = std::make_shared<range_tree_node<TPoint, Dimension>>(lower_span);
+  //     auto upper_span = points.subspan((points.size() + 1) / 2);
+  //     if (!upper_span.empty())
+  //       upper_child = std::make_shared<range_tree_node<TPoint, Dimension>>(upper_span);
+  //   }
+  //   next_dim = std::make_shared<range_tree_node<TPoint, Dimension - 1>>(points);
+  // }
+  template <std::invocable<size_type> Fn>
+  void query(const point_type &lower, const point_type &upper, Fn &&func) {
+    auto lower_key = std::get<Dimension - 1>(lower);
+    auto upper_key = std::get<Dimension - 1>(upper);
+    rich::console.println("query key {}",_key);
+    if(is_leaf()){
+      if (lower_key <= _key && _key <= upper_key)
+        return next_dim->query(lower, upper, func);
+    }
+    if (upper_key < _key) {
+      if (lower_child)
+        lower_child->query(lower, upper, func);
+    } else if (lower_key > _key) {
+      if (upper_child)
+        upper_child->query(lower, upper, func);
+    }
+    else {
+      auto lower_cur = lower_child;
+      while (lower_cur) {
+        if (lower_cur->is_leaf()) {
+          if (lower_key <= lower_cur->_key)
+            lower_cur->next_dim->query(lower, upper, func);
+          break;
+        } else if (lower_key <= lower_cur->_key) {
+          if (lower_cur->upper_child)
+            lower_cur->upper_child->next_dim->query(lower, upper, func);
+          lower_cur = lower_cur->lower_child;
+        } else
+          lower_cur = lower_cur->upper_child;
+      }
+      auto upper_cur = upper_child;
+      while (upper_cur) {
+        if (!upper_cur->lower_child && !upper_cur->upper_child) {
+          if (upper_key >= upper_cur->_key)
+            upper_cur->next_dim->query(lower, upper, func);
+          break;
+        } else if (upper_key > upper_cur->_key) {
+          if (upper_cur->lower_child)
+            upper_cur->lower_child->next_dim->query(lower, upper, func);
+          upper_cur = upper_cur->upper_child;
+        } else
+          upper_cur = upper_cur->lower_child;
+      }
+    }
+  }
+  void print(size_t indent){
+    if(lower_child)
+      lower_child->print(indent);
+    for(size_t i:std::views::iota(0U,indent)) std::cout<<"\t";
+    std::cout<<_key<<"\n";
+    if(upper_child)
+      upper_child->print(indent);
+    next_dim->print(indent+1);
+  }
+
+private:
+  bool is_leaf() { return !lower_child && !upper_child; }
+  std::shared_ptr<range_tree_node<TPoint, Dimension>> lower_child;
+  std::shared_ptr<range_tree_node<TPoint, Dimension>> upper_child;
+  std::shared_ptr<range_tree_node<TPoint, Dimension - 1>> next_dim;
+  key_type _key;
+};
+
+template <typename TPoint>
+class range_tree_node<TPoint, 1> {
+public:
+  using point_type = TPoint;
+  using size_type = size_t;
+  using key_type = std::tuple_element_t<0, TPoint>;
+
+  range_tree_node() = default;
+  range_tree_node(std::span<std::pair<point_type, size_type>> points) {
+    if (points.empty())
+      throw std::logic_error("construct range tree with no point");
+    std::ranges::sort(points, {}, [](const std::pair<point_type, size_type> &x) { return std::get<0>(x.first); });
+    std::ranges::copy(std::views::zip(points | std::views::keys | std::views::elements<0>, points | std::views::values), std::back_inserter(_data));
+  }
+  template <std::invocable<size_type> Fn>
+  void query(const point_type &lower, const point_type &upper, Fn &&func) {
+    auto lower_iter = std::ranges::lower_bound(_data, std::get<0>(lower), {}, [](const auto &x) { return std::get<0>(x); });
+    auto upper_iter = std::ranges::upper_bound(_data, std::get<0>(upper), {}, [](const auto &x) { return std::get<0>(x); });
+    std::ranges::for_each(lower_iter, upper_iter, func, [](const auto &x) { return std::get<1>(x); });
+  }
+  void print(size_t indent){
+    for(size_t i:std::views::iota(0U,indent)) std::cout<<"\t";
+    rich::console.println("{}",_data|std::views::keys);
+  }
+
+private:
+  std::vector<std::pair<key_type, size_type>> _data;
+};
+
+template <typename TPoint, typename TValue>
+class range_tree {
+public:
+  using point_type = TPoint;
+  using value_type = TValue;
+  using size_type = size_t;
+  range_tree() = default;
+  range_tree(const std::map<point_type, value_type> &rng) {
+    // std::vector<std::pair<point_type, size_type>> temp;
+    std::ranges::copy(std::views::zip(rng | std::views::keys, std::views::iota(0U)), std::back_inserter(temp));
+    std::ranges::move(rng | std::views::values, std::back_inserter(_data));
+    _root = range_tree_node<TPoint>{temp};
+  }
+  template <typename Fn>
+  void query(const point_type &lower, const point_type &upper, Fn &&fn) {
+    _root.query(lower, upper, [&](size_type idx) { fn(_data[idx]); });
+  }
+  template <typename Fn>
+  void _query(const point_type &lower, const point_type &upper, Fn &&fn) {
+    auto [l1, l2, l3] = lower;
+    auto [u1, u2, u3] = upper;
+    for (auto &&[point, idx] : temp) {
+      auto [a1, a2, a3] = point;
+      if (l1 <= a1 && l2 <= a2 && l3 <= a3 && a1 <= u1 && a2 <= u2 && a3 <= u3)
+        fn(_data[idx]);
+    }
+  }
+  void print(){
+    _root.print(0);
+  }
+  range_tree_node<TPoint> _root;
+  std::vector<value_type> _data;
+  std::vector<std::pair<point_type, size_type>> temp;
+};

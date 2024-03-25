@@ -48,11 +48,10 @@ struct temporal_index {
   }
   auto query(index_type lower, index_type upper) {
     auto etf = eular_tour_forest<index_type>{num_vert};
-    for (auto edges : tree.query({0, lower, lower}, {lower, upper, upper})) {
-      for (auto [u, v] : edges) {
-        etf.merge(u, v);
-      }
-    }
+    tree.query({0, lower, lower}, {lower, upper, upper}, [&](const decltype(tree)::value_type& edges){
+      for(auto [u,v]:edges)
+        etf.merge(u,v);
+    }); 
     return etf;
   }
   constexpr index_type size() const noexcept { return index.size(); }

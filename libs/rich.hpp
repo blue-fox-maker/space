@@ -79,6 +79,16 @@ struct std::formatter<rich::renderable<std::string>>:public std::formatter<std::
   }
 };
 template <>
+struct std::formatter<rich::renderable<std::string_view>>:public std::formatter<std::string_view>{
+  template <typename FmtContext>
+  auto format(const rich::renderable<std::string_view>& val, FmtContext &ctx) const {
+    *ctx.out()++ = rich::style::set_green;
+    std::formatter<std::string_view>::format(val.data,ctx);
+    *ctx.out()++ = rich::style::reset_fg;
+    return ctx.out();
+  }
+};
+template <>
 struct std::formatter<rich::renderable<char>>:public std::formatter<char>{
   template <typename FmtContext>
   auto format(const rich::renderable<char> val, FmtContext &ctx) const {
@@ -292,10 +302,10 @@ public:
   //   auto time_cost = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - time_start); 
   // }
   template <std::invocable F>
-  std::invoke_result_t<F> bench(F&& func, std::source_location location = std::source_location::current()) noexcept(std::is_nothrow_invocable_v<F>){
+  std::invoke_result_t<F> bench(F&& func,std::string_view description = "function call", std::source_location location = std::source_location::current()) noexcept(std::is_nothrow_invocable_v<F>){
     auto time_lower = std::chrono::high_resolution_clock::now();
     std::invoke(std::forward<F>(func));
-    println("function call at {} takes {}",location,std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()-time_lower));
+    println("{} at {} takes {}",description,location,std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()-time_lower));
   }
 private:
   void progress(size_t num_step, size_t cur_step, std::chrono::hh_mm_ss<std::chrono::seconds> duration, std::string_view description) {

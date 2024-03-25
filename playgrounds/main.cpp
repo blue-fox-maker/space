@@ -25,7 +25,9 @@ int main(){
   auto output_ofs = std::ofstream{"data/output.txt"};
   auto queries = rich::io::load<std::vector<std::pair<size_t,size_t>>>(query_ifs).value();
   //! i build it here
-  index.build();
+  rich::console.bench([&](){
+    index.build();
+  },"build tree");
   rich::console.bench([&]{
     for (auto [ts,te]: queries){
       auto etf = index.query(ts,te);
