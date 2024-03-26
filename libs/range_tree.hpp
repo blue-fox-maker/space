@@ -138,6 +138,8 @@ public:
     if (_root)
       _root->query(lower, upper, [&](const size_type idx) { func(_data[idx]); });
   }
+  [[nodiscard]] constexpr size_type size() const { return _data.size();}
+  // [[nodiscard]] constexpr size_type count() const { return }
 
 private:
   std::unique_ptr<range_tree_node<TPoint>> _root;

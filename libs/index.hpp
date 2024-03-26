@@ -15,7 +15,7 @@ public:
   [[nodiscard]] constexpr index_type find(index_type x) const noexcept { return x == _parents[x]? x: find(_parents[x]);}
   [[nodiscard]] constexpr index_type size() const noexcept{return _size;}
   [[nodiscard]] constexpr bool is_eq(index_type x, index_type y) const noexcept { return find(x)==find(y);}
-  // [[nodiscard]] constexpr bool is_eq(index_type x, index_type y) noexcept { return find(x)==find(y);}
+  [[nodiscard]] constexpr bool is_eq(index_type x, index_type y) noexcept { return find(x)==find(y);}
   constexpr bool merge(index_type x, index_type y) noexcept {
     x = find(x);
     y = find(y);
@@ -47,3 +47,28 @@ private:
   std::unique_ptr<index_type[]> _next;
   index_type _size;
 };
+
+// template <typename T>
+// class temporal_forest{
+// public:
+//    using index_type = size_t; 
+//   temporal_forest(index_type size) noexcept: _size(size), _next(std::make_unique<index_type[]>(size)){
+//     std::iota(_next.get(),_next.get()+size,0);
+//   }
+// private:
+//   std::unique_ptr<index_type[]> _next;
+//   std::unique_ptr<T[]> _stamps;
+//   index_type _size;
+// };
+
+// template <std::unsigned_integral T>
+// class tsf_index{
+//   using index_type = T;
+//   index_type cur_x = 0;
+//   index_type cur_y = 0;
+//   index_type num_vert;
+//   tsf_index(index_type num_vert):num_vert(num_vert){}
+//   void update(index_type u, index_type v, index_type ta, index_type tb){
+    
+//   }
+// };
