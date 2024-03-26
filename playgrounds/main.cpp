@@ -31,26 +31,21 @@ int main(){
   rich::console.bench([&]{
     for (auto [ts,te]: queries){
       auto etf = index.query(ts,te);
-      auto is_visited = std::vector<bool>(num_vert,false);
-      output_ofs << std::format("The spanned connected components in [{}, {}] are:\n",ts,te);
-      for(auto i:std::views::iota(0U,num_vert))
-      {
-        if(!is_visited[i])
-        {
-          auto temp = std::vector<index_type>{};
-          auto v = i;
-          do{
-            v = etf.next(v);
-            temp.push_back(v);
-            is_visited[v] = true;
-          } while(v!=i);
-          std::ranges::sort(temp);
-          output_ofs << "{ ";
-          for(auto x:temp) output_ofs<<x<<" ";
-          output_ofs << "}\n";
-        }
-      }
-      output_ofs<<"\n";
+    //   auto is_visited = std::vector<bool>(num_vert,false);
+    //   // output_ofs << std::format("The spanned connected components in [{}, {}] are:\n",ts,te);
+    //   for(auto i:std::views::iota(0U,num_vert))
+    //   {
+    //     if(!is_visited[i])
+    //     {
+    //       output_ofs << "{ ";
+    //       for(auto v=i;v!=i;v = etf.next(v)){
+    //         is_visited[v]=true;
+    //         output_ofs << v << " ";
+    //       }
+    //       output_ofs << "}\n";
+    //     }
+    //   }
+    //   output_ofs<<"\n";
     }
   });
 }

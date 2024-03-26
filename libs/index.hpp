@@ -12,10 +12,10 @@ public:
     std::iota(_ranks.get(),_ranks.get()+size,0);
   }
   [[nodiscard]] constexpr index_type find(index_type x) noexcept { return x == _parents[x]? x:(_parents[x]=find(_parents[x]));}
-  // [[nodiscard]] constexpr index_type find(index_type x) const noexcept { return x == _parents[x]? x: find(_parents[x]);}
+  [[nodiscard]] constexpr index_type find(index_type x) const noexcept { return x == _parents[x]? x: find(_parents[x]);}
   [[nodiscard]] constexpr index_type size() const noexcept{return _size;}
-  // [[nodiscard]] constexpr bool is_eq(index_type x, index_type y) const noexcept { return find(x)==find(y);}
-  [[nodiscard]] constexpr bool is_eq(index_type x, index_type y) noexcept { return find(x)==find(y);}
+  [[nodiscard]] constexpr bool is_eq(index_type x, index_type y) const noexcept { return find(x)==find(y);}
+  // [[nodiscard]] constexpr bool is_eq(index_type x, index_type y) noexcept { return find(x)==find(y);}
   constexpr bool merge(index_type x, index_type y) noexcept {
     x = find(x);
     y = find(y);
@@ -25,15 +25,6 @@ public:
     else if (_ranks[x]==_ranks[y]) _ranks[y]++;
     return true;
   }
-  // constexpr bool merge(index_type x, index_type y) noexcept {
-  //   x = find(x);
-  //   y = find(y);
-  //   if(x!=y){
-  //     _parents[x]=y;
-  //     return true;
-  //   }
-  //   return false;
-  // }
 private:
   std::unique_ptr<index_type[]> _parents; 
   std::unique_ptr<index_type[]> _ranks;

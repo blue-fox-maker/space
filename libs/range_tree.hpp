@@ -1,4 +1,3 @@
-#include "../libs/rich.hpp"
 #include <algorithm>
 #include <cassert>
 #include <iostream>

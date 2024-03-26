@@ -303,9 +303,9 @@ public:
   // }
   template <std::invocable F>
   std::invoke_result_t<F> bench(F&& func,std::string_view description = "function call", std::source_location location = std::source_location::current()) noexcept(std::is_nothrow_invocable_v<F>){
-    auto time_lower = std::chrono::high_resolution_clock::now();
+    auto time_lower = std::chrono::steady_clock::now();
     std::invoke(std::forward<F>(func));
-    println("{} at {} takes {}",description,location,std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()-time_lower));
+    println("{} at {} takes {}",description,location,std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-time_lower));
   }
 private:
   void progress(size_t num_step, size_t cur_step, std::chrono::hh_mm_ss<std::chrono::seconds> duration, std::string_view description) {
